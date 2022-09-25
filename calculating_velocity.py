@@ -49,3 +49,4 @@ v1, v2, x1, x2 = binary_perast_vel(e, P, m1, m2)
 print(f"{v1:e}", f"{v2:e}")
 print(f"{x1:e}", f"{x2:e}")
 exit()
+
