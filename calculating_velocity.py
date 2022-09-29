@@ -47,20 +47,44 @@ class ArgumentInputs:
         parser.add_argument('m2', help='Mass of star 2 (M_sun)', type=float)
         parser.add_argument('-du', '--dist_units', type=str, choices=["cgs", "au", "pc", "si"], default="cgs")
         parser.add_argument('-vu', '--vel_units', type=str, choices=["cgs", "si"], default="cgs")
+        parser.add_argument('-pu', '--period_units', type=str, choices=["d", "yr"], default="d")
+        parser.add_argument('-mu', '--mass_units', type=str, choices=["M_sun", "cgs", "si"], default="M_sun")
         args=parser.parse_args()
 
         self.Eccentricity = args.eccentricity
         self.Period = args.period
         self.Mass_1 = args.m1
         self.Mass_2= args.m2
+
         self.distance_units=args.dist_units
         self.velocity_units = args.vel_units
+        self.period_units = args.period_units
+        self.mass_units = args.mass_units
+
+        # Changes between selected period units
+        if self.period_units=="yr":
+            self.Period = self.Period*(365.25)*(u.si.d)
+        elif self.period_units=="d":
+            self.Period = self.Period*(u.si.d)
+
+        # Changes between inputed mass units
+        if self.mass_units=="cgs":
+            self.Mass_1 = ((self.Mass_1*u.g)/(const.M_sun.to(u.g)))*u.astrophys.M_sun
+            self.Mass_2 = ((self.Mass_2*u.g)/(const.M_sun.to(u.g)))*u.astrophys.M_sun
+        elif self.mass_units=="si":
+            self.Mass_1 = ((self.Mass_1*u.kg)/(const.M_sun))*u.astrophys.M_sun
+            self.Mass_2 = ((self.Mass_2*u.kg)/(const.M_sun))*u.astrophys.M_sun
+        elif self.mass_units=="M_sun":
+            self.Mass_1 = self.Mass_1*u.astrophys.M_sun
+            self.Mass_2 = self.Mass_2*u.astrophys.M_sun
+    
 
 
 if __name__ == "__main__":
 
     inputs=ArgumentInputs()
-    v1, v2, x1, x2 = binary_perast_vel(inputs.Eccentricity, inputs.Period, inputs.Mass_1, inputs.Mass_2)
+
+    v1, v2, x1, x2 = binary_perast_vel(inputs.Eccentricity, inputs.Period.value, inputs.Mass_1.value, inputs.Mass_2.value)
 
     if inputs.velocity_units=="si":
         v1, v2 = v1.to(u.m/u.s), v2.to(u.m/u.s)
@@ -72,9 +96,12 @@ if __name__ == "__main__":
     elif inputs.distance_units=="si":
         x1, x2 = x1.to(u.m), x2.to(u.m)
 
-    table = tabulate([[f"Velocity ({v1.unit})", v1.value, v2.value], 
-                    [f"Distance ({x1.unit})", x1.value, x2.value]], 
-                    headers=['Quantity', 'Star 1', 'Star2'], tablefmt='fancy_grid',
+    table = tabulate([[f"Velocity ({v1.unit})", f"{v1.value:e}", f"{v2.value:e}"],
+                    [f"Distance ({x1.unit})", f"{x1.value:e}", f"{x2.value:e}"],
+                    [f"Mass (M_sun)", inputs.Mass_1.value, inputs.Mass_2.value],
+                    ["e", inputs.Eccentricity],
+                    [f"Period ({inputs.Period.unit})", inputs.Period.value]], 
+                    headers=['Quantity', 'Star 1', 'Star 2'], tablefmt='fancy_grid',
                     numalign="left"
                     )
     print(table)
