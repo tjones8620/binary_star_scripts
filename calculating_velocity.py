@@ -6,12 +6,16 @@ from tabulate import tabulate
 
 def binary_perast_vel(e, P, m1, m2):
     """
-    Function that computes the y component of the velocity of
-    each star in a binary system at periastron (in cgs units).
+    Computes the y component of the velocity of
+    each star in a binary system at periastron 
+    and the distance from each star to the centre
+    of mass of the system (cgs units). 
 
     - e : eccentricity of the binary system
     - P : period of the system in days
     - m1, m2 : masses of stars in units of M_sun
+
+    
     """
 
     M_sun = const.M_sun.cgs # M_sun in cgs units
@@ -45,10 +49,10 @@ class ArgumentInputs:
         parser.add_argument('eccentricity', help='Eccentricity of the system', type=float)
         parser.add_argument('m1', help='Mass of star 1 (M_sun)', type=float)
         parser.add_argument('m2', help='Mass of star 2 (M_sun)', type=float)
-        parser.add_argument('-du', '--dist_units', type=str, choices=["cgs", "au", "pc", "si"], default="cgs")
-        parser.add_argument('-vu', '--vel_units', type=str, choices=["cgs", "si"], default="cgs")
-        parser.add_argument('-pu', '--period_units', type=str, choices=["d", "yr"], default="d")
-        parser.add_argument('-mu', '--mass_units', type=str, choices=["M_sun", "cgs", "si"], default="M_sun")
+        parser.add_argument('-du', '--dist_units', help="Change distance units for output distances",type=str, choices=["cgs", "au", "pc", "si"], default="cgs")
+        parser.add_argument('-vu', '--vel_units', help="Change velocity units for output velocities", type=str, choices=["cgs", "si"], default="cgs")
+        parser.add_argument('-pu', '--period_units', help="Change units of time for period input",type=str, choices=["d", "yr"], default="d")
+        parser.add_argument('-mu', '--mass_units', type=str, help="Change mass units for mass inputs", choices=["M_sun", "cgs", "si"], default="M_sun")
         args=parser.parse_args()
 
         self.Eccentricity = args.eccentricity
@@ -78,10 +82,7 @@ class ArgumentInputs:
             self.Mass_1 = self.Mass_1*u.astrophys.M_sun
             self.Mass_2 = self.Mass_2*u.astrophys.M_sun
     
-
-
-if __name__ == "__main__":
-
+def main():
     inputs=ArgumentInputs()
 
     v1, v2, x1, x2 = binary_perast_vel(inputs.Eccentricity, inputs.Period.value, inputs.Mass_1.value, inputs.Mass_2.value)
@@ -105,5 +106,11 @@ if __name__ == "__main__":
                     numalign="left"
                     )
     print(table)
+    
+
+if __name__ == "__main__":
+    main()
+
+    
     
     
