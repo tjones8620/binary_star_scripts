@@ -14,9 +14,10 @@ from pypion.ReadData import ReadData
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-p", "--path", help="Path to data folder", default="/mnt/local/thomas/WR140_test2")
+parser.add_argument("-p", "--path", help="Path to data folder", default="/mnt/local/thomas/wr140-cool-covertex/wr140-cool-n064")
 parser.add_argument("-q", "--fluidquantity", help="Desired fluid quantity to plot", default="Density")
 parser.add_argument("-s", "--surface", help ="3D Plot surface - XY, XZ, YZ", default="XY")
+parser.add_argument("-imd","--img_dir", help = "Directory for image to be placed")
 args = parser.parse_args()
 
 
@@ -41,8 +42,10 @@ print(filename)
 Quantity = args.fluidquantity
 print(f"Fluid quantity: {Quantity}")
 
-min_tolerance = np.log10(1.0e-18)
-max_tolerance = np.log10(2.0e-13)
+# min_tolerance = np.log10(1.0e-18)
+# max_tolerance = np.log10(2.0e-13)
+min_tolerance = 5
+max_tolerance = 9
 Tolerance = [min_tolerance, max_tolerance]
 
 # If 3D, specify the coordinate plane
@@ -122,6 +125,17 @@ try:
     print("Image directory" , ImageDir,  "created.")
 except FileExistsError:
     print("Image directory", ImageDir, "already exists.")
+
+    var = input("Do you want to clean up this directory? (y/n): ")
+    if var=="y":
+        print( "Continued with code")
+    elif var=="n":
+        print("Exiting script...")
+        exit()
+    else:
+        print("Invalid input - must be y/n")
+        exit()
+
     print('Cleaning up the',  ImageDir, 'directory ...')
     for f in os.listdir(ImageDir):
         os.remove(os.path.join(ImageDir, f))
@@ -183,7 +197,7 @@ class Plot_Functions:
                 #                   vmin=np.log10(min(sliced_data.flatten().tolist())), vmax=np.log10(max(sliced_data.flatten().tolist()))
                 #                   )
 
-                image = ax.imshow(np.log10(sliced_data), interpolation="nearest", cmap="plasma",
+                image = ax.imshow(np.log10(sliced_data), interpolation="nearest", cmap="inferno",
                                   extent=extents,
                                   origin="lower",
                                   vmin=tolerance[0], vmax=tolerance[1]

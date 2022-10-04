@@ -28,7 +28,7 @@ for files in time_dicts:
 
 	# Change var1 to modify specific settings for your plot.
 	# var1 = ["parameter", max, min, "colour scale", "axis(y or z)", ngrid/2 - 1 (so for 128^3 this is 63, 256^3 it's 127, etc)]
-	var1 = ["Density", -13, -18, "viridis", 'y', 63]
+	var1 = ["Density", -13.5, -17.5, "viridis", 'y', 63]
 	# var1 = ["Temperature", 8, 3, "inferno", 'log', 'y', 127]
 
 	fig = plt.figure()

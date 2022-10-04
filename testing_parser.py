@@ -1,9 +1,12 @@
-# import argparse
-# from ast import arg, parse
+var = input("Do you want to clean up this directory? (y/n): ")
 
-import astropy.units as u
-import astropy.constants as const
-
-q = 25*const.R_sun.cgs
-print(q.unit)
-print(f"{q:2e}")
+if var=="y":
+    print( "Continued with code")
+elif var=="n":
+    print("Exiting script...")
+    exit()
+else:
+    print("Invalid input - must be y/n")
+    exit()
+    
+print("Code continued correctly")
