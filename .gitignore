@@ -1,2 +1,5 @@
 .vscode/
 .DS_Store
+*.gif
+*.mp4
+*.png
