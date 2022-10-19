@@ -19,11 +19,14 @@ def binary_perast_vel(e, P, m1, m2):
     """
 
     M_sun = const.M_sun.cgs # M_sun in cgs units
+    print(M_sun)
     G = const.G.cgs # Gravitational constant in cgs units
-    
-    P = P * 24 * 60 * 60 * u.s.cgs # Converting period from days to seconds
-    m1, m2 = m1*M_sun, m2*M_sun # Converting masses to grams
+    print(G)
 
+    P = P * 24 * 60 * 60 * u.s.cgs # Converting period from days to seconds
+    print(P)
+    m1, m2 = m1*M_sun, m2*M_sun # Converting masses to grams
+    print(m1, m2)
     #Semi-major axis from Keplers third law
     a = ((G * (m1+m2) * P **2) / (4. * np.pi**2))**(1./3.) 
 
