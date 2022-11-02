@@ -11,7 +11,7 @@ def make_snapshots(data_path):
         silo_files = os.listdir(data_path)
         silo_files = sorted([f for f in silo_files if f.endswith('.silo')])
         filename=(silo_files[0]).replace('_level00_0000.00000000.silo','')
-        print(filename)
+        print(f"Basename of silo files: {filename}")
 
         cwd = os.getcwd()
 
@@ -51,7 +51,7 @@ def make_snapshots(data_path):
         evolution = np.array(catalog).T
         print(f"Shape of evolution array: {evolution.shape}")
 
-        os.chdir(cwd)
+        # os.chdir(cwd)
         return evolution
 
 def get_ds(file) -> yt.data_objects.static_output.Dataset:
@@ -82,3 +82,18 @@ def get_ds(file) -> yt.data_objects.static_output.Dataset:
 
     ds = yt.load_amr_grids(grid_data, N_grids, length_unit=f"{Dom_size} * cm", geometry=("cartesian", ("z","y","x")), sim_time=sim_time)
     return ds
+
+
+def get_ts(files):
+    
+    ds_list = []
+    for file in files:
+        ds = get_ds(file)
+        ds_list.append(ds)
+    
+    ts = yt.DatasetSeries(ds_list)
+
+    return ts
+
+
+
