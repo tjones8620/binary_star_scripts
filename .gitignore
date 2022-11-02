@@ -3,3 +3,5 @@
 *.gif
 *.mp4
 *.png
+*.pyc
+*visitlog*.py 
