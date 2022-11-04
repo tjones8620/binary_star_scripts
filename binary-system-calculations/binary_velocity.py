@@ -219,6 +219,8 @@ class BinarySystem():
         self.y1_covert = -1*y1[zero_crossings[0]]*u.cm
         self.y2_covert = -1*y2[zero_crossings[0]]*u.cm
 
+        print(self.t_array[zero_crossings])
+
         return self.vx1_covert, self.vx2_covert, self.x1_covert, self.x2_covert, self.y1_covert, self.y2_covert
     
     ########################################################################################

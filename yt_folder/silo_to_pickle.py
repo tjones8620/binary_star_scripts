@@ -1,15 +1,14 @@
 import time
 import numpy as np
 import os
-from make_movies import make_movies
 from pypion.ReadData import ReadData
 import pickle
-import json
 import argparse
 import numpy as np
 import yt
 import glob
 import re
+import hdfdict
 
 
 class ArgparseInputs:
@@ -113,7 +112,10 @@ def save_grid_data_to_pickle(files, pickle_file):
         N_grids_list.append(N_grids)
         Dom_size_list.append(Dom_size)
 
-        print(f"\nCreating Grid Data at sim-time: {sim_time} ...")
+        print(f"Creating Grid Data at sim-time: {sim_time:e} ...")
+
+        del grid_data, sim_time, N_grids, Dom_size, data, data_den, data_temp, data_velx, data_vely, data_velz
+
 
     print("\n")
     print("#"*30)
@@ -127,16 +129,17 @@ def save_grid_data_to_pickle(files, pickle_file):
 
     print(f"\nSaving array grid information to {pickle_file} ...")
     
-    os.chdir(cwd)
 
-    if not pickle_file.endswith('.pickle'):
-       print("Pickle file name should end with '.pickle'")
-       print("Exiting ...")
-       exit()
+    # if not pickle_file.endswith('.pickle'):
+    #    print("Pickle file name should end with '.pickle'")
+    #    print("Exiting ...")
+    #    exit()
 
     #### Saving dictionary to a pickle file ####
-    with open(pickle_file, 'xb') as f:
-        pickle.dump(grid_dict, f)
+    # with open(pickle_file, 'xb') as f:
+    #     pickle.dump(grid_dict, f)
+
+    hdfdict.dump(grid_dict, pickle_file)
     
     print(f"Finished saving data to {pickle_file}")
 
