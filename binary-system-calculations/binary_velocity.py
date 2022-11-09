@@ -219,7 +219,7 @@ class BinarySystem():
         self.y1_covert = -1*y1[zero_crossings[0]]*u.cm
         self.y2_covert = -1*y2[zero_crossings[0]]*u.cm
 
-        print(self.t_array[zero_crossings])
+        print(f"Start time {self.t_array[zero_crossings]}")
 
         return self.vx1_covert, self.vx2_covert, self.x1_covert, self.x2_covert, self.y1_covert, self.y2_covert
     
@@ -249,8 +249,10 @@ class BinarySystem():
         t_array_yr = self.t_array/(365*24*60*60)
 
         fig, ax = plt.subplots()
-        text = plt.text(0.6, 0.85, '', color='white', transform=ax.transAxes, fontsize = 10)
-        text.set_text('Time = {:.1f} Years'.format(t_array_yr[int(phase*len(x1))]))
+        text1 = plt.text(0.6, 0.85, '', color='white', transform=ax.transAxes, fontsize = 10)
+        text1.set_text('Time = {:.1f} Years'.format(t_array_yr[int(phase*len(x1))]))
+        text2 = plt.text(0.2, 0.85, '', color='white', transform=ax.transAxes, fontsize = 10)
+        text2.set_text('Phase = {:.3f}'.format(phase))
         ax.plot(x1, y1, ls = "--", color="w", lw=1)
         ax.plot(x2, y2, ls = "--", color="w", lw=1)
         ax.plot(x1_arb.value, y1_arb.value, 'o', color="orange", markersize=10)

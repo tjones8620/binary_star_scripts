@@ -1,17 +1,17 @@
-import argparse
+# import argparse
 import os
 
-class ArgumentInputs:
-    def __init__(self):
-        parser = argparse.ArgumentParser()
-        parser.add_argument('path')
-        parser.add_argument('basename')
-        parser.add_argument('quantity')
-        args = parser.parse_args()
+# class ArgumentInputs:
+#     def __init__(self):
+#         parser = argparse.ArgumentParser()
+#         parser.add_argument('path')
+#         parser.add_argument('basename')
+#         parser.add_argument('quantity')
+#         args = parser.parse_args()
         
-        self.path = args.path
-        self.basename = args.basename
-        self.quantity = args.quantity
+#         self.path = args.path
+#         self.basename = args.basename
+#         self.quantity = args.quantity
 
 # cmdargs = ArgumentInputs()
 
@@ -20,8 +20,10 @@ hostname = "mimir.ap.dias.ie"
 # file_basename = "wr140_mhd_cool_d3l7n128"
 
 # Input parameters
-file_path = "/mnt/massive-stars/data/thomas_simulations/wr140-sims/covertex_start/red_z_res/wr140-hydro-l7n128/"
-file_basename = "wr140_hydro_cool_d3l7n128"
+# file_path = "/mnt/massive-stars/data/thomas_simulations/wr140-sims/covertex_start/red_z_res/wr140-hydro-l7n128/"
+# file_basename = "wr140_hydro_cool_d3l7n128"
+file_path = "/mnt/massive-stars/data/thomas_simulations/wr140-sims/late_start/wr140-hydro-n256/"
+file_basename = "wr140_hydro_cool_d3l7n256"
 quantity = "Temperature"
 
 # file_path = cmdargs.path
