@@ -62,6 +62,8 @@ class BinarySystem():
 
         self.orb_sol = self.integrate_orbit(k=1, **init_cond)
 
+        self.d_mag = self.get_d_mag()
+
 
     @staticmethod
     def get_periast_v_x(e, P, m1, m2):
@@ -267,6 +269,18 @@ class BinarySystem():
         plt.savefig(f"{self.name}_arbitrary_orbital_phase.png", dpi=200)
 
         return vx1_arb, vx2_arb, vy1_arb, vy2_arb, x1_arb, x2_arb, y1_arb, y2_arb
+
+    def get_d_mag(self):
+        """
+        Calculates the change in magnitude of the system due to the binary orbit
+        """
+
+        x1, y1, x2, y2, vx1, vy1, vx2, vy2 = self.orb_sol
+
+        d_mag = np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+        d_mag = d_mag*u.cm
+
+        return d_mag
 
 
 

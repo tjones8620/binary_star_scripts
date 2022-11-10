@@ -1,68 +1,80 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+plt.style.use("science")
 import os
-plt.style.use("ieee")
+import astropy.units as u
 import pathlib
 home = pathlib.Path.home()
+from scipy.optimize import curve_fit
 
-############################################################################################################
+import sys
+sys.path.insert(0, os.path.join(home, 'code/project/scripts/'))
 
-headers = ['time [s]','L(E>0.1keV)', 'L(E>0.2keV)', 'L(E>0.3keV)', 'L(E>0.5keV)', 'L(E>1keV)', 'L(E>2keV)', 'L(E>5keV)', 'L(E>10keV)']
 
-path = os.path.join(home, "project/scripts/xray-luminosity/xray-lum-wr140-mhd-n256.txt")
-df = pd.read_csv(path, sep=' ', names=headers, index_col=False)
+class XrayLum:
+    def __init__(self, path, image_folder, start_time, name):
+        self.path = path
+        self.image_folder = image_folder
+        self.start_time = start_time
+        self.name = name
+        self.df = self.get_df(self.path, self.start_time)
 
-df['L(2keV < E < 10keV)'] = df['L(E>2keV)'] - df['L(E>10keV)']
-df['time [s]'] = df['time [s]'] / (24*60*60)
-df.rename(columns={'time [s]': 'time [d]'}, inplace=True)
+    @staticmethod
+    def get_df(path, start_time):
+        headers = ['time','g0.1', 'g0.2', 'g0.3', 'g0.5', 'g1', 'g2', 'g5', 'g10']
+        df = pd.read_csv(path, delim_whitespace=True, names=headers, index_col=False)
+        df['2-10'] = df['g2'] - df['g10']
+        df['time'] = (df['time'] + start_time) / (86400)
+        df.rename(columns={'time': 'time [d]'}, inplace=True)
+        return df
 
-############################################################################################################
+    def plot_xray_lum(self, **kwargs):
+        fig, ax1 = plt.subplots()
+        ax1.set_xlabel('Time (d)')
+        ax1.set_ylabel('Unabsorbed Flux ($erg$ $cm^{-2}$$s^{-1}$)')
+        ax1.grid(True)
 
-# Plotting xray luminosity vs time for different energy bands
-fig, ax1 = plt.subplots(figsize=(6,4))
+        ax2 = ax1.twinx()  # create a second axes that shares the same x-axis
+        ax2.plot(self.df['time [d]'], self.df['g0.1'], color='blue', linestyle='solid', label='$L(E>0.1keV)$')
+        ax2.plot(self.df['time [d]'], self.df['g0.2'], color='purple', linestyle='solid', label='$L(E>0.2keV)$')
+        ax2.plot(self.df['time [d]'], self.df['g0.5'], color='red', linestyle='solid', label='$L(E>0.5keV)$')
+        ax2.plot(self.df['time [d]'], self.df['g1'], color='yellow', linestyle='solid', label='$L(E>1keV)$')
+        ax2.plot(self.df['time [d]'], self.df['g2'], color='cyan', linestyle='solid', label='$L(E>2keV)$')
+        ax2.plot(self.df['time [d]'], self.df['g5'], color='lightpink', linestyle='solid', label='$L(E>5keV)$')
+        ax2.plot(self.df['time [d]'], self.df['g10'], color='peru', linestyle='solid', label='$L(E>10keV)$')
+        ax2.set_ylabel('X-ray Luminosity ($erg$ $s^{-1}$)')
+        ax2.legend(loc='upper left', ncol=2, framealpha=1, frameon=True, fontsize=5)
+        ax2.set_xlim(kwargs.get('xmin', None), kwargs.get('xmax', None))
+        ax2.set_ylim(kwargs.get('ymin', None), kwargs.get('ymax', None))
+        plt.savefig(os.path.join(self.image_folder, f'xray-lum-{self.name}.png'), bbox_inches='tight', dpi=300)
 
-plt.title("Unabsorbed Flux vs Time")
-ax1.set_xlabel('Time (d)')
-ax1.set_ylabel('Unabsorbed Flux ($erg$ $cm^{-2}$$s^{-1}$)')
+    def plot_xray_lum_2_10(self, **kwargs):
+        fig, ax1 = plt.subplots()
+        ax1.set_xlabel('Time (d)')
+        ax1.set_ylabel('Unabsorbed Flux ($erg$ $cm^{-2}$$s^{-1}$)')
+        ax1.grid(True)
 
-ax1.grid(True)
+        ax2 = ax1.twinx()  # create a second axes that shares the same x-axis
+        ax2.plot(self.df['time [d]'], self.df['2-10'], color='blue', linestyle='solid', label='$L(2keV - 10keV)$')
+        ax2.set_ylabel('X-ray Luminosity ($erg$ $s^{-1}$)')
+        ax2.legend(loc='upper left', ncol=1, framealpha=1)
+        ax2.set_xlim(kwargs.get('xmin', None), kwargs.get('xmax', None))
+        ax2.set_ylim(kwargs.get('ymin', None), kwargs.get('ymax', None))
+        plt.savefig(os.path.join(self.image_folder, f'xray-lum-{self.name}-2-10keV.png'), bbox_inches='tight', dpi=300)
 
-ax2 = ax1.twinx()  # create a second axes that shares the same x-axis
+def main():
+    # path = os.path.join(home, "code/project/scripts/xray-luminosity/xray-lum-wr140-mhd-n256.txt")
+    # start_time = -2.671e7
+    # image_folder = os.path.join(home, "code/project/images/xray-luminosity/wr140-mhd-n256")
 
-ax2.plot(df['time [d]']-307.16, df['L(E>0.1keV)'], color='blue', linestyle='solid', label='$L(E>0.1keV)$')
-ax2.plot(df['time [d]']-307.16, df['L(E>0.2keV)'], color='purple', linestyle='solid', label='$L(E>0.2keV)$')
-ax2.plot(df['time [d]']-307.16, df['L(E>0.5keV)'], color='red', linestyle='solid', label='$L(E>0.5keV)$')
-ax2.plot(df['time [d]']-307.16, df['L(E>1keV)'], color='yellow', linestyle='solid', label='$L(E>1keV)$')
-ax2.plot(df['time [d]']-307.16, df['L(E>2keV)'], color='cyan', linestyle='solid', label='$L(E>2keV)$')
-ax2.plot(df['time [d]']-307.16, df['L(E>5keV)'], color='lightpink', linestyle='solid', label='$L(E>5keV)$')
-ax2.plot(df['time [d]']-307.16, df['L(E>10keV)'], color='peru', linestyle='solid', label='$L(E>10keV)$')
+    path = os.path.join(home, "code/project/scripts/xray-luminosity/xray-lum-wr140-hydro-n256.txt")
+    start_time = -2.671e7
+    image_folder = os.path.join(home, "code/project/images/xray-luminosity/wr140-hydro-n256")
 
-ax2.set_ylabel('X-ray Luminosity ($erg$ $s^{-1}$)')
-ax2.legend(loc='upper left', ncol=2, framealpha=1, frameon=True, fontsize=5)
-plt.savefig('xray-lum-wr140-mhd-n256.png', dpi=300, bbox_inches='tight')
+    plot = XrayLum(path=path, start_time=start_time, image_folder=image_folder, name='wr140-hydro-n256')
+    plot.plot_xray_lum()
+    plot.plot_xray_lum_2_10()
 
-############################################################################################################
-
-# Plotting xray luminosity vs time for 2-10keV band
-
-fig, ax1 = plt.subplots(figsize=(6,4))
-
-plt.title("Unabsorbed Flux vs Time")
-ax1.set_xlabel('Time (d)')
-ax1.set_ylabel('Unabsorbed Flux ($erg$ $cm^{-2}$$s^{-1}$)')
-
-ax1.grid(True)
-
-ax2 = ax1.twinx()  # create a second axes that shares the same x-axis
-
-daysec = 24 * 60 * 60 
-
-x = df['time [d]']-307.16
-y = df['L(2keV < E < 10keV)'] #/max(df['L(2keV < E < 10keV)'])
-
-ax2.plot(x, y, color='blue', linestyle='solid', label='$L(2keV - 10keV)$')
-
-ax2.set_ylabel('X-ray Luminosity ($erg$ $s^{-1}$)')
-ax2.legend(loc='upper left', ncol=2, framealpha=1, frameon=True, fontsize=5)
-plt.savefig('xray-lum-wr140-mhd-n256-2_10keV.png', dpi=300, bbox_inches='tight')
+if __name__ == "__main__":
+    main()

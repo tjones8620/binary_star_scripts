@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+plt.style.use('science')
 from astropy.io import fits
 import os
 import re
@@ -10,25 +11,12 @@ import astropy.units as u
 import pandas as pd
 
 import pathlib
-home = str(pathlib.Path.home())
+home = pathlib.Path.home()
+
 import sys
 sys.path.insert(0, os.path.join(home, 'code/project/scripts/'))
 
 from yt_folder.silo_to_yt import make_snapshots
-
-# class ArgparseInputs:
-#     def __init__(self):
-#         parser = argparse.ArgumentParser()
-#         parser.add_argument("Path", help="Path to data folder")
-#         parser.add_argument("fits_dir", help="Path to fits directory")
-#         parser.add_argument("png_dir", help="Path to png directory")
-#         parser.add_argument('--tol', nargs='+', type=float, default=[np.log10(1.0e-18), np.log10(2.0e-13)])
-#         parser.add_argument('--cmap', default='viridis')
-#         args = parser.parse_args()
-
-#         self.path = args.Path
-#         self.tolerance = args.tol
-#         self.img_dir = args.img_dir
 
 
 class XrayProj:
@@ -96,7 +84,9 @@ class XrayProj:
 
     def get_star_position(self, trajectory_file):
 
-        headers = ['time', 'unknown','star1_x', 'star1_y', 'star1_z','star1_vx', 'star1_vy', 'star1_vz', 'star2_x', 'star2_y', 'star2_z', 'star2_vx', 'star2_vy', 'star2_vz']
+        headers = ['time', 'unknown','star1_x', 'star1_y', 'star1_z', 
+                'star1_vx', 'star1_vy', 'star1_vz', 'star2_x', 'star2_y', 
+                'star2_z', 'star2_vx', 'star2_vy', 'star2_vz']
 
         df = pd.read_csv(trajectory_file, delim_whitespace=True, names=headers)
 
@@ -144,7 +134,7 @@ class XrayProj:
         ax.scatter(self.star1_x[i-self.args[0]]*-1, self.star1_y[i-self.args[0]], marker="*", color="yellow", s=100, label="O-Star")
         ax.scatter(self.star2_x[i-self.args[0]]*-1, self.star2_y[i-self.args[0]], marker="*", color="blue", s=50, label="WR-Star")
 
-        ax.legend(loc='upper right', framealpha=0.5)
+        ax.legend(loc='upper right', framealpha=0.5, frameon=True)
         
 
         if sim_time < 0:
@@ -176,7 +166,7 @@ def main():
     # Path to file containing trajectory data
     trajectory_file = os.path.join(data_dir, "trajectory.txt")
 
-    plot = XrayProj(data_dir, fits_dir, png_dir, start_time, trajectory_file=trajectory_file, vmin=0, vmax=0.00225, cmap="inferno", tolerance=0.05)
+    plot = XrayProj(data_dir, fits_dir, png_dir, start_time, trajectory_file=trajectory_file, vmin=0, vmax=0.00225, cmap="inferno", tolerance=0.03)
 
     
     for i in plot.args:
