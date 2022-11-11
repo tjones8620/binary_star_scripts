@@ -62,7 +62,7 @@ class BinarySystem():
 
         self.orb_sol = self.integrate_orbit(k=1, **init_cond)
 
-        self.d_mag = self.get_d_mag()
+        # self.d_mag = self.get_d_mag()
 
 
     @staticmethod
@@ -248,6 +248,10 @@ class BinarySystem():
         y2_arb = y2[int(phase*len(x1))]*u.cm
 
 
+        start_time = (self.Period*u.d).to(u.s).value * (1 - phase)
+
+        print("Start time: ", start_time, "before periastron")
+
         t_array_yr = self.t_array/(365*24*60*60)
 
         fig, ax = plt.subplots()
@@ -270,17 +274,17 @@ class BinarySystem():
 
         return vx1_arb, vx2_arb, vy1_arb, vy2_arb, x1_arb, x2_arb, y1_arb, y2_arb
 
-    def get_d_mag(self):
-        """
-        Calculates the change in magnitude of the system due to the binary orbit
-        """
+    # def get_d_mag(self):
+    #     """
+    #     Calculates the change in magnitude of the system due to the binary orbit
+    #     """
 
-        x1, y1, x2, y2, vx1, vy1, vx2, vy2 = self.orb_sol
+    #     x1, y1, x2, y2, vx1, vy1, vx2, vy2 = self.orb_sol
 
-        d_mag = np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
-        d_mag = d_mag*u.cm
+    #     d_mag = np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+    #     d_mag = d_mag*u.cm
 
-        return d_mag
+    #     return d_mag
 
 
 

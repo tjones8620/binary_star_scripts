@@ -61,7 +61,7 @@ class XrayLum:
         ax2.legend(loc='upper left', ncol=1, framealpha=1)
         ax2.set_xlim(kwargs.get('xmin', None), kwargs.get('xmax', None))
         ax2.set_ylim(kwargs.get('ymin', None), kwargs.get('ymax', None))
-        plt.savefig(os.path.join(self.image_folder, f'xray-lum-{self.name}-2-10keV.png'), bbox_inches='tight', dpi=300)
+        plt.savefig(os.path.join(self.image_folder, f'xray-lum-{self.name}-2-10keV.png'), bbox_inches='tight', dpi=kwargs.get('dpi', 300))
 
 def main():
     # path = os.path.join(home, "code/project/scripts/xray-luminosity/xray-lum-wr140-mhd-n256.txt")
