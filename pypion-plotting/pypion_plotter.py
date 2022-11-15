@@ -26,7 +26,10 @@ class Plot_Functions:
             exit()
             
         ########### Base name of SILO files ############################
-        self.filename=sorted(os.listdir(self.data_path))[4].replace('_level00_0000.00000000.silo','')
+        _ = os.listdir(path)
+        _= sorted([f for f in _ if f.endswith('.silo')])
+        self.filename=(_[0]).replace('_level00_0000.00000000.silo','')
+        # self.filename=sorted(os.listdir(self.data_path))[4].replace('_level00_0000.00000000.silo','')
         print(self.filename)
 
         ########### Define desired fluid quantity ######################
@@ -61,8 +64,8 @@ class Plot_Functions:
     @staticmethod
     def make_snapshots(data_path, filename):
         ########## Cataloging silo files ###############################
-        os.chdir(data_path)
-        file_list = glob.glob('*.silo', recursive=True)
+        # os.chdir(data_path)
+        file_list = glob.glob(os.path.join(data_path, '*.silo'), recursive=True)
         level_list = []
         files = []
 
@@ -86,7 +89,7 @@ class Plot_Functions:
             print(f'Simulation Info: {len(level_list)} levels')
             catalog = []
             for i in range(len(level_list)):
-                files = sorted(glob.glob(f"{filename}_level{level_list[i]}_0000.*.silo"))
+                files = sorted(glob.glob(os.path.join(data_path, f"{filename}_level{level_list[i]}_0000.*.silo")))
                 catalog.append(files)
                 
         # Bundle silo files of different levels of same time instant into a snapshot.
@@ -132,8 +135,6 @@ class Plot_Functions:
         return ImageDir
 
 
-
-
     #######################################################################
     # 3D-Surface-Plotter
     def ThreeDSurfacePlotter(self, colormap='viridis', movie=False):
@@ -157,8 +158,8 @@ class Plot_Functions:
             fig, ax = plt.subplots()
             ax.set_xlim(dims_min[0][x].value, dims_max[0][x].value)
             ax.set_ylim(dims_min[0][y].value, dims_max[0][y].value)
-            ax.set_xlabel(xlabel + str(dims_min.unit), fontsize=8)
-            ax.set_ylabel(ylabel + str(dims_min.unit), fontsize=8)
+            ax.set_xlabel(f"{xlabel} ({str(dims_min.unit)})", fontsize=8)
+            ax.set_ylabel(f"{ylabel} ({str(dims_min.unit)})", fontsize=8)
 
             for l in range(N_level):  # plotting each levels
 
