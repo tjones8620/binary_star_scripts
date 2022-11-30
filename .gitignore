@@ -1,8 +1,8 @@
-.vscode/
 __pycache__/
 .DS_Store
 *.gif
 *.mp4
 *.png
 *.pyc
-*visitlog*.py 
+*visitlog*.py
+.* 
