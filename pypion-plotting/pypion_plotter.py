@@ -13,6 +13,8 @@ import glob
 import moviepy.video.io.ImageSequenceClip
 from pypion.ReadData import ReadData
 
+unit_dict = {'Density': "$g \, cm^{-3}$", 'Temperature': "K", 'Velocity': "$cm \, s^{-1}$"}
+
 ###########################################################################
 # Plot functions for different dimensions.
 class Plot_Functions:
@@ -171,7 +173,6 @@ class Plot_Functions:
                 if (self.Surface == 'XZ'): sliced_data = plot_data[l][:, slice_location - 1, :]
                 if (self.Surface == 'XY'): sliced_data = plot_data[l][slice_location - 1, :, :]
                 # Slicer ends #*********************************************************
-
             
                 extents = [dims_min[l][x].value, dims_max[l][x].value, dims_min[l][y].value, dims_max[l][y].value]
 
@@ -187,8 +188,10 @@ class Plot_Functions:
                 plt.savefig(f"{self.ImageDir}/image{str(k).zfill(3)}.png", bbox_inches="tight", dpi=500)
                 
                 if (l == 0):
-                    cbaxes = fig.add_axes([0.22, 0.95, 0.575, 0.02])
-                    cb = fig.colorbar(image, ax=ax, orientation="horizontal", cax=cbaxes, pad=0.0)
+                    # cbaxes = fig.add_axes([0.22, 0.95, 0.575, 0.02])
+                    cbaxes = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
+                    cb = fig.colorbar(image, ax=ax, orientation="vertical", cax=cbaxes, pad=0.0)
+                    cb.set_label("$log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
                     cb.ax.tick_params(labelsize=8)
                     tick_locator = ticker.MaxNLocator(nbins=5)
                     cb.locator = tick_locator

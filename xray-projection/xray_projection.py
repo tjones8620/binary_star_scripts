@@ -180,33 +180,33 @@ class XrayProj:
 def main(): 
     # Defining time before periastron where simulation was started
     # start_time = -2.679e7
-    start_time = -2.671e7
-    # start_time = -7.25e6
-    # 7503840
+    # start_time = -2.671e7 # start time for simulations starting at covertex
+    start_time = -7.25e6 # start time for simulations starting at orbital phase 0.98
+
 
     # Path to directory containing silo files that were used to create the fits files
-    data_dir = "/mnt/massive-stars/data/thomas_simulations/wr140-sims/covertex_start/red_z_res/wr140-mhd-l7n256/"
-    # data_dir = "/mnt/massive-stars/data/thomas_simulations/wr140-sims/late_start/wr140-hydro-n256"
-
+    # data_dir = "/mnt/massive-stars/data/thomas_simulations/wr140-sims/covertex_start/red_z_res/wr140-mhd-l7n256/"
+    data_dir = "/mnt/massive-stars/data/thomas_simulations/wr140-sims/late_start/wr140-hydro-n256"
 
     # Path to directory containing fits files
-    fits_dir = os.path.join(data_dir, "proj/XY_proj2")
-    # fits_dir = os.path.join(data_dir, "proj/proj_XY")
-
+    # fits_dir = os.path.join(data_dir, "proj/XY_proj2")
+    fits_dir = os.path.join(data_dir, "proj/proj_XZ")
 
     # Path to directory where png files will be saved
     # png_dir = os.path.join(home, "code/project/images/xray-proj/wr140-mhd-n256/XY/")
-    png_dir = os.path.join(home, "code/project/images/xray-proj/wr140-mhd-n256/XY/")
+    # png_dir = os.path.join(home, "code/project/images/xray-proj/wr140-mhd-n256/XY/")
+    png_dir = os.path.join(home, "code/project/images/xray-proj/wr140-hydro-n256/XZ/")
+
 
 
     # Path to file containing trajectory data
     trajectory_file = os.path.join(data_dir, "trajectory.txt")
 
-    plot = XrayProj(data_dir, fits_dir, png_dir, start_time, trajectory_file=trajectory_file, vmin=0, vmax=0.00225, cmap="inferno", tolerance=0.03, plane="xy", zoom = 4)
+    plot = XrayProj(data_dir, fits_dir, png_dir, start_time, trajectory_file=trajectory_file, vmin=0, vmax=0.00225, cmap="inferno", tolerance=0.03, plane="xz", zoom = 4)
 
     
     for i in plot.args:
-        plot.create_imgs(i, band="soft")
+        plot.create_imgs(i, band="hard")
 
 if __name__ == "__main__":
     main()
