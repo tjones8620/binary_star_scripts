@@ -11,7 +11,7 @@ rows = [['Rocket', 'Organisation', 'LEO Payload (Tonnes)', 'Maiden Flight'],
 
 table = Texttable()
 table.set_cols_align(["c"] * 4)
-table.set_deco(Texttable.HEADER)
+table.set_deco(Texttable.HEADER | Texttable.BORDER)
 table.add_rows(rows)
 
 print('Tabulate Table:')
@@ -20,12 +20,12 @@ print(tabulate(rows, headers='firstrow'))
 print('\nTexttable Table:')
 print(table.draw())
 
-print('\nTabulate Latex:')
-print("\\begin{table}")
-print("\\begin{center}")
-print(tabulate(rows, headers='firstrow', tablefmt='latex', colalign=("center",)*4))
-print("\\end{table}")
-print("\\end{center}")
+# print('\nTabulate Latex:')
+# print("\\begin{table}")
+# print("\\begin{center}")
+# print(tabulate(rows, headers='firstrow', tablefmt='latex', colalign=("center",)*4))
+# print("\\end{table}")
+# print("\\end{center}")
 
 print('\nTexttable Latex:')
 print(latextable.draw_latex(table, caption="A comparison of rocket features.", label="tab:rockets"))

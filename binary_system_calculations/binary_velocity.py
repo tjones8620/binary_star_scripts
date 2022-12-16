@@ -12,7 +12,7 @@ import matplotlib
 import argparse
 import os
 from tabulate import tabulate
-# plt.style.use("science")
+plt.style.use("science")
 
 class ArgumentInputs:
     def __init__(self):
@@ -68,10 +68,8 @@ class BinarySystem():
     @staticmethod
     def get_periast_v_x(e, P, m1, m2):
         """
-        Computes the y component of the velocity of
-        each star in a binary system at periastron 
-        and the distance from each star to the centre
-        of mass of the system (cgs units). 
+        Computes the y component of the velocity of each star in a binary system at periastron 
+        and the distance from each star to the centre of mass of the system (cgs units). 
 
         - e : eccentricity of the binary system
         - P : period of the system in days
@@ -121,15 +119,11 @@ class BinarySystem():
         m1 = kwargs['m1'] * M_sun.value
         m2 = kwargs['m2'] * M_sun.value
 
-        x1_0 = kwargs['x1']
-        y1_0 = kwargs['y1']
-        x2_0 = kwargs['x2']
-        y2_0 = kwargs['y2']
+        x1_0 = kwargs['x1'] ; y1_0 = kwargs['y1']
+        x2_0 = kwargs['x2'] ; y2_0 = kwargs['y2']
 
-        vx1_0 = kwargs['vx1']
-        vy1_0 = kwargs['vy1']
-        vx2_0 = kwargs['vx2']
-        vy2_0 = kwargs['vy2']
+        vx1_0 = kwargs['vx1'] ; vy1_0 = kwargs['vy1']
+        vx2_0 = kwargs['vx2'] ; vy2_0 = kwargs['vy2']
 
         def dSdt(S, t):
             x1, y1, x2, y2, vx1, vy1, vx2, vy2 = S
@@ -154,15 +148,20 @@ class BinarySystem():
     def plot_binary_orbit(self, sol, make_animation=False, length=10, set_fps=30, int_time=50):
 
         x1, y1, x2, y2, vx1, vy1, vx2, vy2 = sol
-        fig, ax = plt.subplots()
-        ax.plot(x1,y1, label='Star 1')
-        ax.plot(x2,y2, label='Star 2')
-        ax.set_title(f"Orbit of {self.name}")
+        fig, ax = plt.subplots(figsize=(6,6))
+        ax.plot(x1, y1, ls = "--", color="w", lw=1, label="WR star")
+        ax.plot(x2, y2, ls = "--", color="w", lw=1, label="O star")
+        ln1, = plt.plot([], [], 'o', lw=3, markersize=10, color="orange")
+        text = plt.text(0.6, 0.85, '', color='white', transform=ax.transAxes, fontsize = 10)
+        # ax.text(0.7, 0.7, '',transform=ax.transAxes)
+        ax.set_xlim(-1.2*np.abs(x1).max(), 1.2*np.abs(x2).max())
+        ax.set_ylim(-1.2*((np.abs(x1).max() + np.abs(x2).max())/2), 1.2*((np.abs(x1).max() + np.abs(x2).max())/2))
         ax.set_aspect(aspect=1)
-        ax.set_xlabel("x (cm)")
-        ax.set_ylabel("y (cm)")
-        ax.grid()
-        plt.savefig(os.path.join(os.path.abspath(os.path.dirname(__file__)),f"orbit_{self.name}.png"))
+        ax.set_facecolor('k')
+        ax.set_xlabel("x [cm]", fontsize=8)
+        ax.set_ylabel("y [cm]", fontsize=8)
+        ax.legend(loc="upper right", fontsize=8, frameon=True)
+        plt.savefig(os.path.join(os.path.abspath(os.path.dirname(__file__)),f"orbit_{self.name}.png"), dpi=300)
 
         if make_animation==True:
  
@@ -177,22 +176,26 @@ class BinarySystem():
             
             t_array_yr = self.t_array/(365*24*60*60)
 
+
+            x1_au, y1_au = (x1*u.cm).to(u.au).value, (y1*u.cm).to(u.au).value
+            x2_au, y2_au = (x2*u.cm).to(u.au).value, (y2*u.cm).to(u.au).value
+
             def animate(i):
-                ln1.set_data([x1[::spacing][i], x2[::spacing][i]], [y1[::spacing][i], y2[::spacing][i]])
+                ln1.set_data([x1_au[::spacing][i], x2_au[::spacing][i]], [y1_au[::spacing][i], y2_au[::spacing][i]])
                 text.set_text('Time = {:.1f} Years'.format(t_array_yr[::spacing][i]))
-            fig, ax = plt.subplots()
-            ax.set_title(f"Orbital Motion of {self.name}")
-            ax.plot(x1, y1, ls = "--", color="w", lw=1)
-            ax.plot(x2, y2, ls = "--", color="w", lw=1)
-            ln1, = plt.plot([], [], 'o', lw=3, markersize=10, color="orange")
+            fig, ax = plt.subplots(figsize=(6,6))
+            # ax.set_title(f"Orbital Motion of {self.name}")
+            ax.plot(x1_au, y1_au, ls = "--", color="w", lw=1)
+            ax.plot(x2_au, y2_au, ls = "--", color="w", lw=1)
+            ln1, = plt.plot([], [], '*', lw=3, markersize=10, color="yellow")
             text = plt.text(0.6, 0.85, '', color='white', transform=ax.transAxes, fontsize = 10)
             # ax.text(0.7, 0.7, '',transform=ax.transAxes)
-            ax.set_xlim(-1.2*np.abs(x1).max(), 1.2*np.abs(x2).max())
-            ax.set_ylim(-1.2*((np.abs(x1).max() + np.abs(x2).max())/2), 1.2*((np.abs(x1).max() + np.abs(x2).max())/2))
+            ax.set_xlim(-1.2*np.abs(x1_au).max(), 1.2*np.abs(x2_au).max())
+            ax.set_ylim(-1.2*((np.abs(x1_au).max() + np.abs(x2_au).max())/2), 1.2*((np.abs(x1_au).max() + np.abs(x2_au).max())/2))
             ax.set_aspect(aspect=1)
             ax.set_facecolor('k')
-            ax.set_xlabel("x [cm]", fontsize=8)
-            ax.set_ylabel("y [cm]", fontsize=8)
+            ax.set_xlabel("x [AU]", fontsize=8)
+            ax.set_ylabel("y [AU]", fontsize=8)
             ani = animation.FuncAnimation(fig, animate, frames=num_frames, interval=int_time)
             ani.save(f'{self.name}_orbit.gif',writer='pillow',fps=set_fps, dpi=200)
 
@@ -247,6 +250,14 @@ class BinarySystem():
         y1_arb = y1[int(phase*len(x1))]*u.cm
         y2_arb = y2[int(phase*len(x1))]*u.cm
 
+        x1_au, y1_au = (x1*u.cm).to(u.au).value, (y1*u.cm).to(u.au).value
+        x2_au, y2_au = (x2*u.cm).to(u.au).value, (y2*u.cm).to(u.au).value
+
+        x1_arb_au = x1_arb.to(u.au).value
+        x2_arb_au = x2_arb.to(u.au).value
+        y1_arb_au = y1_arb.to(u.au).value
+        y2_arb_au = y2_arb.to(u.au).value
+
 
         start_time = (self.Period*u.d).to(u.s).value * (1 - phase)
 
@@ -254,37 +265,26 @@ class BinarySystem():
 
         t_array_yr = self.t_array/(365*24*60*60)
 
-        fig, ax = plt.subplots()
-        text1 = plt.text(0.6, 0.85, '', color='white', transform=ax.transAxes, fontsize = 10)
-        text1.set_text('Time = {:.1f} Years'.format(t_array_yr[int(phase*len(x1))]))
-        text2 = plt.text(0.2, 0.85, '', color='white', transform=ax.transAxes, fontsize = 10)
+        fig, ax = plt.subplots(figsize=(6,6))
+        text1 = plt.text(0.1, 0.8, '', color='white', transform=ax.transAxes, fontsize = 10)
+        text1.set_text('Time = {:.2f} Years'.format(t_array_yr[int(phase*len(x1))]))
+        text2 = plt.text(0.1, 0.85, '', color='white', transform=ax.transAxes, fontsize = 10)
         text2.set_text('Phase = {:.3f}'.format(phase))
-        ax.plot(x1, y1, ls = "--", color="w", lw=1)
-        ax.plot(x2, y2, ls = "--", color="w", lw=1)
-        ax.plot(x1_arb.value, y1_arb.value, 'o', color="orange", markersize=10)
-        ax.plot(x2_arb.value, y2_arb.value, 'o', color="orange", markersize=10)
-        ax.set_xlim(-1.2*np.abs(x1).max(), 1.2*np.abs(x2).max())
-        ax.set_ylim(-1.2*((np.abs(x1).max() + np.abs(x2).max())/2), 1.2*((np.abs(x1).max() + np.abs(x2).max())/2))
+        ax.plot(x1_au, y1_au, ls = "--", color="w", lw=1)
+        ax.plot(x2_au, y2_au, ls = "--", color="w", lw=1)
+        ax.plot(x1_arb_au, y1_arb_au, '*', color="blue", markersize=12, label="WR star")
+        ax.plot(x2_arb_au, y2_arb_au, '*', color="yellow", markersize=12, label="O star")
+        ax.set_xlim(-1.2*np.abs(x1_au).max(), 1.2*np.abs(x2_au).max())
+        ax.set_ylim(-1.2*((np.abs(x1_au).max() + np.abs(x2_au).max())/2), 1.2*((np.abs(x1_au).max() + np.abs(x2_au).max())/2))
         ax.set_aspect(aspect=1)
         ax.set_facecolor('k')
-        ax.set_xlabel("x [cm]", fontsize=8)
-        ax.set_ylabel("y [cm]", fontsize=8)
+        ax.set_xlabel("x [AU]", fontsize=8)
+        ax.set_ylabel("y [AU]", fontsize=8)
+        ax.legend(loc="upper right", fontsize=8, frameon=True, markerscale = 0.8)
         ax.set_title(f"Orbital Motion of {self.name}")
         plt.savefig(f"{self.name}_arbitrary_orbital_phase.png", dpi=200)
 
         return vx1_arb, vx2_arb, vy1_arb, vy2_arb, x1_arb, x2_arb, y1_arb, y2_arb
-
-    # def get_d_mag(self):
-    #     """
-    #     Calculates the change in magnitude of the system due to the binary orbit
-    #     """
-
-    #     x1, y1, x2, y2, vx1, vy1, vx2, vy2 = self.orb_sol
-
-    #     d_mag = np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
-    #     d_mag = d_mag*u.cm
-
-    #     return d_mag
 
 
 
@@ -329,8 +329,6 @@ def main():
         table_items.extend([arb_x, arb_y, arb_vx, arb_vy])
 
     
-
-
     table = tabulate(table_items
                     ,
                     headers=headers, 

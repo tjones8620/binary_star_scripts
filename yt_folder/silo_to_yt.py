@@ -82,6 +82,13 @@ def get_ds(file, quantities=["density"]) -> yt.data_objects.static_output.Datase
         data_By = data.get_3Darray("MagneticFieldY")['data']
         data_Bz = data.get_3Darray("MagneticFieldZ")['data']
     
+    if quantities.__contains__("I_sync"):
+        data_Bx = np.array(data.get_3Darray("MagneticFieldX")['data'])
+        data_By = np.array(data.get_3Darray("MagneticFieldY")['data'])
+        data_Bz = np.array(data.get_3Darray("MagneticFieldZ")['data'])
+        data_bmag = np.sqrt(data_Bx**2 + data_By**2 + data_Bz**2)
+        data_pressure = data.get_3Darray("Pressure")['data']
+        data_Isync = np.multiply(data_bmag**3/2, data_pressure)
     
 
 
@@ -106,7 +113,7 @@ def get_ds(file, quantities=["density"]) -> yt.data_objects.static_output.Datase
         if quantities.__contains__("temperature"):
             g[("gas", "temperature")] = (data_temp[i], "K")
         if quantities.__contains__("pressure"):
-            g[("gas", "pressure")] = (data_pressure[i], "K")
+            g[("gas", "pressure")] = (data_pressure[i], "dyne/cm**2")
         if quantities.__contains__("NG_Mask"):
             g[("gas", "NG_Mask")] = (data_ngmask[i], "K")
         if quantities.__contains__("windtracer"):
@@ -120,6 +127,8 @@ def get_ds(file, quantities=["density"]) -> yt.data_objects.static_output.Datase
             g[("gas", "magnetic_field_y")] = (data_By[i], "G")
             g[("gas", "magnetic_field_z")] = (data_Bz[i], "G")
 
+        if quantities.__contains__("I_sync"):
+            g[("gas", "I_sync")] = (data_Isync[i], "G**3/cm**6")
 
         i += 1
 
