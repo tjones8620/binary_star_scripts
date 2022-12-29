@@ -264,6 +264,8 @@ class Plot_Functions:
         plot_indices = [pre_periastron_list[np.argmin(pre_periastron_phase)], periastron_list[np.argmin(periastron_phase)], post_periastron_list[np.argmin(post_periastron_phase)]]
         print(plot_indices)
 
+        threeplotfig, threeplotax = plt.subplots(1, 3, figsize=(12, 4), sharey=True)
+
         for index in plot_indices:
             data = ReadData(self.evolution[index])
             N_level = data.nlevels()
@@ -304,29 +306,35 @@ class Plot_Functions:
                                   )
                 
                 
-                plt.savefig(f"{self.ImageDir}/3sliceimage{str(index).zfill(3)}.png", bbox_inches="tight", dpi=500)
-                
-                if (l == 0):
-                    # cbaxes = fig.add_axes([0.22, 0.95, 0.575, 0.02])
-                    cbaxes = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
-                    cb = fig.colorbar(image, ax=ax, orientation="vertical", cax=cbaxes, pad=0.0)
-                    if (self.Quantity == 'Density'): 
-                        cb.set_label(r"$\log_{10}$ "+r"$(\rho)$" + f" ({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
-                    else:
-                        cb.set_label(r"$\log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
-                    cb.ax.tick_params(labelsize=8)
-                    tick_locator = ticker.MaxNLocator(nbins=5)
-                    cb.locator = tick_locator
-                    cb.update_ticks()
-                
-                    phase = str(f"{((self.period + time)/self.period):.2f}")
-                    st = r"$\phi$ = " + phase 
-                    ax.text(0.8, 0.9, st, color="black", fontsize=8, transform=ax.transAxes, 
-                            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=1', alpha=0.5))
+
+            # cbaxes = fig.add_axes([0.22, 0.95, 0.575, 0.02])
+            # cbaxes = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
+            # cb = fig.colorbar(image, ax=ax, orientation="vertical", cax=cbaxes, pad=0.0)
+            # if (self.Quantity == 'Density'): 
+            #     cb.set_label(r"$\log_{10}$ "+r"$(\rho)$" + f" ({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
+            # else:
+            #     cb.set_label(r"$\log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
+            # cb.ax.tick_params(labelsize=8)
+            # tick_locator = ticker.MaxNLocator(nbins=5)
+            # cb.locator = tick_locator
+            # cb.update_ticks()
+        
+            # phase = str(f"{((self.period + time)/self.period):.2f}")
+            # st = r"$\phi$ = " + phase 
+            # ax.text(0.8, 0.9, st, color="black", fontsize=8, transform=ax.transAxes, 
+            #         bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=1', alpha=0.5))
+
+
+
+            plt.savefig(f"{self.ImageDir}/3sliceimage{str(index).zfill(3)}.png", bbox_inches="tight", dpi=500)
+            
+            
 
             plt.close(fig)
             print(f'Time: {time:.2e}.',
                   f'Saving snap-{str(k)} to 3sliceimage{str(index).zfill(3)}.png ...')
+
+        
 
 
 
