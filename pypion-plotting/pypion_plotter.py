@@ -12,13 +12,14 @@ from matplotlib import ticker
 import glob
 import moviepy.video.io.ImageSequenceClip
 from pypion.ReadData import ReadData
+# plt.style.use("science")
 
 unit_dict = {'Density': "$g \, cm^{-3}$", 'Temperature': "K", 'Velocity': "$cm \, s^{-1}$"}
 
 ###########################################################################
 # Plot functions for different dimensions.
 class Plot_Functions:
-    def __init__(self, path, image_dir, fluid_quantity, tolerance, plane):
+    def __init__(self, path, image_dir, fluid_quantity, tolerance, plane, start_time, period):
         ########### Defining path to SILO files #######################
         self.data_path = path
         if os.path.exists(path):
@@ -61,7 +62,8 @@ class Plot_Functions:
         ######### Defining default fps for mp4 ##########
         self.fps=10
 
-    
+        self.start_time = start_time
+        self.period = period*units.yr
 
     @staticmethod
     def make_snapshots(data_path, filename):
@@ -151,11 +153,14 @@ class Plot_Functions:
             data = ReadData(self.evolution[k])
             N_level = data.nlevels()
             N_grids = data.ngrid()
+            # NG_Mask = data.get_3Darray('NG_Mask')
             baseline_data = data.get_3Darray(self.Quantity)
+            # fluid_parameter = np.multiply(baseline_data['data'], NG_Mask['data'])
             fluid_parameter = baseline_data['data']
             dims_min = (baseline_data['min_extents'] * units.cm).to(units.astrophys.au)
             dims_max = (baseline_data['max_extents'] * units.cm).to(units.astrophys.au)
-            time = (baseline_data['sim_time'].value * units.s).to(units.yr)
+            time = ((baseline_data['sim_time'].value + self.start_time) * units.s).to(units.yr)
+
 
             fig, ax = plt.subplots()
             ax.set_xlim(dims_min[0][x].value, dims_max[0][x].value)
@@ -191,16 +196,19 @@ class Plot_Functions:
                     # cbaxes = fig.add_axes([0.22, 0.95, 0.575, 0.02])
                     cbaxes = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
                     cb = fig.colorbar(image, ax=ax, orientation="vertical", cax=cbaxes, pad=0.0)
-                    cb.set_label("$log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
+                    if (self.Quantity == 'Density'): 
+                        cb.set_label(r"$\log_{10}$ "+r"$(\rho)$" + f" ({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
+                    else:
+                        cb.set_label(r"$\log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
                     cb.ax.tick_params(labelsize=8)
                     tick_locator = ticker.MaxNLocator(nbins=5)
                     cb.locator = tick_locator
                     cb.update_ticks()
-
                 
-                    # tm = str(f"{time.value:.4f}")
-                    # st = "\nTime = " + tm + str(time.unit) + "\n$\log_{10} \left[" + fluid_quantity + "\, (\mathrm{g\,cm}^{-3}) \\right]$"
-                    # ax.text(0.3, 0.9, st, color="white", fontsize=8, transform=ax.transAxes)
+                    phase = str(f"{((self.period + time)/self.period):.2f}")
+                    st = r"$\phi$ = " + phase 
+                    ax.text(0.8, 0.9, st, color="black", fontsize=8, transform=ax.transAxes, 
+                            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=1', alpha=0.5))
 
             plt.close(fig)
             print(f'Time: {time:.2e}.',
@@ -218,5 +226,115 @@ class Plot_Functions:
         
         else:
             pass
+    
+    def three_time_slice(self, colormap='viridis', d_phase = 0.01):
+
+        if (self.Surface == 'XY'): xlabel = 'x'; x = 0; ylabel = 'y'; y = 1 ; z = 2 
+        if (self.Surface == 'XZ'): xlabel = 'x'; x = 0; ylabel = 'z'; y = 2 ; z = 1
+        if (self.Surface == 'YZ'): xlabel = 'y'; x = 1; ylabel = 'z'; y = 2 ; z = 1
+
+        pre_periastron_list = []  # list of pre-periastron snapshots
+        pre_periastron_phase = [] # list of pre-periastron times
+        periastron_list = [] # list of periastron snapshots
+        periastron_phase = [] # list of periastron times
+        post_periastron_list = [] # list of post-periastron snapshots
+        post_periastron_phase = [] # list of post-periastron times
+
+        for k in range(len(self.evolution)):
+            data = ReadData(self.evolution[k])
+            sim_time = data.sim_time().value
+            time = ((sim_time + self.start_time) * units.s).to(units.yr)
+            phase = ((self.period + time)/self.period).value
+            phase_str = f"{((self.period + time)/self.period):.2f}"
+
+            pre_per_phase = 1 - d_phase
+            post_per_phase = 1 + d_phase
+
+            if phase_str == "1.00":
+                periastron_list.append(k)
+                periastron_phase.append(abs(phase - 1.0))
+            elif phase_str == f"{pre_per_phase}":
+                pre_periastron_list.append(k)
+                pre_periastron_phase.append(abs(phase - pre_per_phase))
+            elif phase_str == f"{post_per_phase}":
+                post_periastron_list.append(k)
+                post_periastron_phase.append(abs(phase - post_per_phase))
+        
+
+        plot_indices = [pre_periastron_list[np.argmin(pre_periastron_phase)], periastron_list[np.argmin(periastron_phase)], post_periastron_list[np.argmin(post_periastron_phase)]]
+        print(plot_indices)
+
+        for index in plot_indices:
+            data = ReadData(self.evolution[index])
+            N_level = data.nlevels()
+            N_grids = data.ngrid()
+            # NG_Mask = data.get_3Darray('NG_Mask')
+            baseline_data = data.get_3Darray(self.Quantity)
+            # fluid_parameter = np.multiply(baseline_data['data'], NG_Mask['data'])
+            fluid_parameter = baseline_data['data']
+            dims_min = (baseline_data['min_extents'] * units.cm).to(units.astrophys.au)
+            dims_max = (baseline_data['max_extents'] * units.cm).to(units.astrophys.au)
+            time = ((baseline_data['sim_time'].value + self.start_time) * units.s).to(units.yr)
+
+            fig, ax = plt.subplots()
+            ax.set_xlim(dims_min[0][x].value, dims_max[0][x].value)
+            ax.set_ylim(dims_min[0][y].value, dims_max[0][y].value)
+            ax.set_xlabel(f"{xlabel} ({str(dims_min.unit)})", fontsize=8)
+            ax.set_ylabel(f"{ylabel} ({str(dims_min.unit)})", fontsize=8)
+
+            for l in range(N_level):  # plotting each levels
+
+                plot_data = np.array(fluid_parameter)
+                
+                # Slicer ###############################################################
+                slice_location = int(0.5 * N_grids[z])
+                if (self.Surface == 'YZ'): sliced_data = plot_data[l][:, :, slice_location - 1]
+                if (self.Surface == 'XZ'): sliced_data = plot_data[l][:, slice_location - 1, :]
+                if (self.Surface == 'XY'): sliced_data = plot_data[l][slice_location - 1, :, :]
+                # Slicer ends #*********************************************************
+            
+                extents = [dims_min[l][x].value, dims_max[l][x].value, dims_min[l][y].value, dims_max[l][y].value]
+
+                # if (self.Surface == 'YZ'): extents = [dims_min[l][y].value, dims_max[l][y].value, dims_min[l][x].value, dims_max[l][x].value]
+
+                image = ax.imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
+                                  extent=extents,
+                                  origin="lower",
+                                  vmin=self.Tolerance[0], vmax=self.Tolerance[1]
+                                  )
+                
+                
+                plt.savefig(f"{self.ImageDir}/3sliceimage{str(index).zfill(3)}.png", bbox_inches="tight", dpi=500)
+                
+                if (l == 0):
+                    # cbaxes = fig.add_axes([0.22, 0.95, 0.575, 0.02])
+                    cbaxes = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
+                    cb = fig.colorbar(image, ax=ax, orientation="vertical", cax=cbaxes, pad=0.0)
+                    if (self.Quantity == 'Density'): 
+                        cb.set_label(r"$\log_{10}$ "+r"$(\rho)$" + f" ({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
+                    else:
+                        cb.set_label(r"$\log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
+                    cb.ax.tick_params(labelsize=8)
+                    tick_locator = ticker.MaxNLocator(nbins=5)
+                    cb.locator = tick_locator
+                    cb.update_ticks()
+                
+                    phase = str(f"{((self.period + time)/self.period):.2f}")
+                    st = r"$\phi$ = " + phase 
+                    ax.text(0.8, 0.9, st, color="black", fontsize=8, transform=ax.transAxes, 
+                            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=1', alpha=0.5))
+
+            plt.close(fig)
+            print(f'Time: {time:.2e}.',
+                  f'Saving snap-{str(k)} to 3sliceimage{str(index).zfill(3)}.png ...')
+
+
+
+        
+            
+
+            
+
+
         
 
