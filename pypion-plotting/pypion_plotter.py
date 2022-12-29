@@ -12,7 +12,7 @@ from matplotlib import ticker
 import glob
 import moviepy.video.io.ImageSequenceClip
 from pypion.ReadData import ReadData
-# plt.style.use("science")
+plt.style.use("science")
 
 unit_dict = {'Density': "$g \, cm^{-3}$", 'Temperature': "K", 'Velocity': "$cm \, s^{-1}$"}
 
@@ -193,7 +193,6 @@ class Plot_Functions:
                 plt.savefig(f"{self.ImageDir}/image{str(k).zfill(3)}.png", bbox_inches="tight", dpi=500)
                 
                 if (l == 0):
-                    # cbaxes = fig.add_axes([0.22, 0.95, 0.575, 0.02])
                     cbaxes = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
                     cb = fig.colorbar(image, ax=ax, orientation="vertical", cax=cbaxes, pad=0.0)
                     if (self.Quantity == 'Density'): 
@@ -260,12 +259,10 @@ class Plot_Functions:
                 post_periastron_list.append(k)
                 post_periastron_phase.append(abs(phase - post_per_phase))
         
-
         plot_indices = [pre_periastron_list[np.argmin(pre_periastron_phase)], periastron_list[np.argmin(periastron_phase)], post_periastron_list[np.argmin(post_periastron_phase)]]
-        print(plot_indices)
 
-        threeplotfig, threeplotax = plt.subplots(1, 3, figsize=(12, 4), sharey=True)
-
+        threeplotfig, ax = plt.subplots(1, 3, figsize=(12, 4), sharey=True)
+        num = 0
         for index in plot_indices:
             data = ReadData(self.evolution[index])
             N_level = data.nlevels()
@@ -278,11 +275,10 @@ class Plot_Functions:
             dims_max = (baseline_data['max_extents'] * units.cm).to(units.astrophys.au)
             time = ((baseline_data['sim_time'].value + self.start_time) * units.s).to(units.yr)
 
-            fig, ax = plt.subplots()
-            ax.set_xlim(dims_min[0][x].value, dims_max[0][x].value)
-            ax.set_ylim(dims_min[0][y].value, dims_max[0][y].value)
-            ax.set_xlabel(f"{xlabel} ({str(dims_min.unit)})", fontsize=8)
-            ax.set_ylabel(f"{ylabel} ({str(dims_min.unit)})", fontsize=8)
+            ax[num].set_xlim(dims_min[0][x].value, dims_max[0][x].value)
+            ax[num].set_ylim(dims_min[0][y].value, dims_max[0][y].value)
+            ax[num].set_xlabel(f"{xlabel} ({str(dims_min.unit)})", fontsize=8)
+
 
             for l in range(N_level):  # plotting each levels
 
@@ -299,40 +295,48 @@ class Plot_Functions:
 
                 # if (self.Surface == 'YZ'): extents = [dims_min[l][y].value, dims_max[l][y].value, dims_min[l][x].value, dims_max[l][x].value]
 
-                image = ax.imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
+                image = ax[num].imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
                                   extent=extents,
                                   origin="lower",
                                   vmin=self.Tolerance[0], vmax=self.Tolerance[1]
                                   )
-                
-                
 
-            # cbaxes = fig.add_axes([0.22, 0.95, 0.575, 0.02])
-            # cbaxes = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
-            # cb = fig.colorbar(image, ax=ax, orientation="vertical", cax=cbaxes, pad=0.0)
-            # if (self.Quantity == 'Density'): 
-            #     cb.set_label(r"$\log_{10}$ "+r"$(\rho)$" + f" ({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
-            # else:
-            #     cb.set_label(r"$\log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
-            # cb.ax.tick_params(labelsize=8)
-            # tick_locator = ticker.MaxNLocator(nbins=5)
-            # cb.locator = tick_locator
-            # cb.update_ticks()
+            phase = str(f"{((self.period + time)/self.period):.2f}")
+            st = r"$\phi$ = " + phase 
+            ax[num].text(0.7, 0.9, st, color="black", fontsize=8, transform=ax[num].transAxes, 
+                    bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=1', alpha=0.5))
+    
+            num+=1
+            print(num)
         
-            # phase = str(f"{((self.period + time)/self.period):.2f}")
-            # st = r"$\phi$ = " + phase 
-            # ax.text(0.8, 0.9, st, color="black", fontsize=8, transform=ax.transAxes, 
-            #         bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=1', alpha=0.5))
+
+        ax[0].set_ylabel(f"{ylabel} ({str(dims_min.unit)})", fontsize=8)
+
+        # cbaxes = threeplotfig.add_axes([0.22, 0.95, 0.575, 0.02])
+        cbaxes = threeplotfig.add_axes([ax[num-1].get_position().x1+0.01,ax[num-1].get_position().y0,0.02,ax[num-1].get_position().height])
+        cb = threeplotfig.colorbar(image, ax=ax[num-1], orientation="vertical", cax=cbaxes, pad=3.0)
+        if (self.Quantity == 'Density'): 
+            cb.set_label(r"$\log_{10}$ "+r"$(\rho)$" + f" ({unit_dict[self.Quantity]})", fontsize=8, labelpad=4)
+        else:
+            cb.set_label(r"$\log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
+        # cb.ax.tick_params(labelsize=8)
+        tick_locator = ticker.MaxNLocator(nbins=5)
+        cb.locator = tick_locator
+        tick_font_size = 8
+        cb.ax.tick_params(labelsize=tick_font_size)
+        cb.update_ticks()
+        
 
 
 
-            plt.savefig(f"{self.ImageDir}/3sliceimage{str(index).zfill(3)}.png", bbox_inches="tight", dpi=500)
+
+        plt.savefig(f"{self.ImageDir}/3sliceimage{str(index).zfill(3)}.png", bbox_inches="tight", dpi=500)
             
             
 
-            plt.close(fig)
-            print(f'Time: {time:.2e}.',
-                  f'Saving snap-{str(k)} to 3sliceimage{str(index).zfill(3)}.png ...')
+            # plt.close(fig)
+            # print(f'Time: {time:.2e}.',
+            #       f'Saving snap-{str(k)} to 3sliceimage{str(index).zfill(3)}.png ...')
 
         
 
