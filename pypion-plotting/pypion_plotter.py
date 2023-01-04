@@ -14,7 +14,7 @@ import moviepy.video.io.ImageSequenceClip
 from pypion.ReadData import ReadData
 plt.style.use("science")
 
-unit_dict = {'Density': "$g \, cm^{-3}$", 'Temperature': "K", 'Velocity': "$cm \, s^{-1}$"}
+unit_dict = {'Density': "$g \, cm^{-3}$", 'Temperature': "K", 'Velocity': "$cm \, s^{-1}$", "Tr000_WIND": ""}
 
 ###########################################################################
 # Plot functions for different dimensions.
@@ -141,7 +141,7 @@ class Plot_Functions:
 
     #######################################################################
     # 3D-Surface-Plotter
-    def ThreeDSurfacePlotter(self, colormap='viridis', movie=False):
+    def ThreeDSurfacePlotter(self, colormap='viridis', movie=False, log=True):
 
         print('3D-Surface-Plotter: Plotting', self.Surface, 'plane')
 
@@ -183,32 +183,41 @@ class Plot_Functions:
 
                 # if (self.Surface == 'YZ'): extents = [dims_min[l][y].value, dims_max[l][y].value, dims_min[l][x].value, dims_max[l][x].value]
 
-                image = ax.imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
-                                  extent=extents,
-                                  origin="lower",
-                                  vmin=self.Tolerance[0], vmax=self.Tolerance[1]
-                                  )
-                
-                
-                plt.savefig(f"{self.ImageDir}/image{str(k).zfill(3)}.png", bbox_inches="tight", dpi=500)
-                
-                if (l == 0):
-                    cbaxes = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
-                    cb = fig.colorbar(image, ax=ax, orientation="vertical", cax=cbaxes, pad=0.0)
-                    if (self.Quantity == 'Density'): 
-                        cb.set_label(r"$\log_{10}$ "+r"$(\rho)$" + f" ({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
-                    else:
-                        cb.set_label(r"$\log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
-                    cb.ax.tick_params(labelsize=8)
-                    tick_locator = ticker.MaxNLocator(nbins=5)
-                    cb.locator = tick_locator
-                    cb.update_ticks()
-                
-                    phase = str(f"{((self.period + time)/self.period):.2f}")
-                    st = r"$\phi$ = " + phase 
-                    ax.text(0.8, 0.9, st, color="black", fontsize=8, transform=ax.transAxes, 
-                            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=1', alpha=0.5))
+                if (log == True):
+                    image = ax.imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
+                                      extent=extents,
+                                      origin="lower",
+                                      vmin=self.Tolerance[0], vmax=self.Tolerance[1]
+                                      )
 
+                elif (log == False):
+                    image = ax.imshow(sliced_data, interpolation="nearest", cmap=colormap,
+                                      extent=extents,
+                                      origin="lower",
+                                      vmin=10**self.Tolerance[0], vmax=10**self.Tolerance[1]
+                                      )
+                else:
+                    print('Error: log must be True or False')
+                    exit()
+
+
+            cbaxes = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
+            cb = fig.colorbar(image, ax=ax, orientation="vertical", cax=cbaxes, pad=0.0)
+            if (self.Quantity == 'Density'): 
+                cb.set_label(r"$\log_{10}$ "+r"$(\rho)$" + f" ({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
+            else:
+                cb.set_label(r"$\log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
+            cb.ax.tick_params(labelsize=8)
+            tick_locator = ticker.MaxNLocator(nbins=5)
+            cb.locator = tick_locator
+            cb.update_ticks()
+        
+            phase = str(f"{((self.period + time)/self.period):.2f}")
+            st = r"$\phi$ = " + phase 
+            ax.text(0.8, 0.9, st, color="black", fontsize=8, transform=ax.transAxes, 
+                    bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=1', alpha=0.5))
+
+            plt.savefig(f"{self.ImageDir}/image{str(k).zfill(3)}.png", bbox_inches="tight", dpi=500)
             plt.close(fig)
             print(f'Time: {time:.2e}.',
                   f'Saving snap-{str(k)} to image{str(k).zfill(3)}.png ...')
@@ -226,7 +235,7 @@ class Plot_Functions:
         else:
             pass
     
-    def three_time_slice(self, colormap='viridis', d_phase = 0.01):
+    def three_time_slice(self, colormap='viridis', d_phase = 0.01, log=True):
 
         if (self.Surface == 'XY'): xlabel = 'x'; x = 0; ylabel = 'y'; y = 1 ; z = 2 
         if (self.Surface == 'XZ'): xlabel = 'x'; x = 0; ylabel = 'z'; y = 2 ; z = 1
@@ -293,13 +302,18 @@ class Plot_Functions:
             
                 extents = [dims_min[l][x].value, dims_max[l][x].value, dims_min[l][y].value, dims_max[l][y].value]
 
-                # if (self.Surface == 'YZ'): extents = [dims_min[l][y].value, dims_max[l][y].value, dims_min[l][x].value, dims_max[l][x].value]
-
-                image = ax[num].imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
-                                  extent=extents,
-                                  origin="lower",
-                                  vmin=self.Tolerance[0], vmax=self.Tolerance[1]
-                                  )
+                if log == True:
+                    image = ax[num].imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
+                                    extent=extents,
+                                    origin="lower",
+                                    vmin=self.Tolerance[0], vmax=self.Tolerance[1]
+                                    )
+                else:
+                     image = ax[num].imshow(sliced_data, interpolation="nearest", cmap=colormap,
+                                    extent=extents,
+                                    origin="lower",
+                                    vmin=self.Tolerance[0], vmax=self.Tolerance[1]
+                                    )                   
 
             phase = str(f"{((self.period + time)/self.period):.2f}")
             st = r"$\phi$ = " + phase 
@@ -309,44 +323,17 @@ class Plot_Functions:
             num+=1
             print(num)
         
-
         ax[0].set_ylabel(f"{ylabel} ({str(dims_min.unit)})", fontsize=8)
-
-        # cbaxes = threeplotfig.add_axes([0.22, 0.95, 0.575, 0.02])
         cbaxes = threeplotfig.add_axes([ax[num-1].get_position().x1+0.01,ax[num-1].get_position().y0,0.02,ax[num-1].get_position().height])
         cb = threeplotfig.colorbar(image, ax=ax[num-1], orientation="vertical", cax=cbaxes, pad=3.0)
         if (self.Quantity == 'Density'): 
             cb.set_label(r"$\log_{10}$ "+r"$(\rho)$" + f" ({unit_dict[self.Quantity]})", fontsize=8, labelpad=4)
         else:
             cb.set_label(r"$\log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
-        # cb.ax.tick_params(labelsize=8)
         tick_locator = ticker.MaxNLocator(nbins=5)
         cb.locator = tick_locator
         tick_font_size = 8
         cb.ax.tick_params(labelsize=tick_font_size)
         cb.update_ticks()
-        
-
-
-
 
         plt.savefig(f"{self.ImageDir}/3sliceimage{str(index).zfill(3)}.png", bbox_inches="tight", dpi=500)
-            
-            
-
-            # plt.close(fig)
-            # print(f'Time: {time:.2e}.',
-            #       f'Saving snap-{str(k)} to 3sliceimage{str(index).zfill(3)}.png ...')
-
-        
-
-
-
-        
-            
-
-            
-
-
-        
-
