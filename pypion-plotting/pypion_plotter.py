@@ -14,6 +14,7 @@ import moviepy.video.io.ImageSequenceClip
 from pypion.ReadData import ReadData
 plt.style.use("science")
 
+quantity_dict = {'Density':r'$\rho$', 'Temperature':"T", 'Velocity': "v", 'Tr000_WIND': "Wind Tracer"}
 unit_dict = {'Density': "$g \, cm^{-3}$", 'Temperature': "K", 'Velocity': "$cm \, s^{-1}$", "Tr000_WIND": ""}
 
 ###########################################################################
@@ -251,6 +252,7 @@ class Plot_Functions:
         for k in range(len(self.evolution)):
             data = ReadData(self.evolution[k])
             sim_time = data.sim_time().value
+            data.close()
             time = ((sim_time + self.start_time) * units.s).to(units.yr)
             phase = ((self.period + time)/self.period).value
             phase_str = f"{((self.period + time)/self.period):.2f}"
@@ -267,6 +269,7 @@ class Plot_Functions:
             elif phase_str == f"{post_per_phase}":
                 post_periastron_list.append(k)
                 post_periastron_phase.append(abs(phase - post_per_phase))
+            
         
         plot_indices = [pre_periastron_list[np.argmin(pre_periastron_phase)], periastron_list[np.argmin(periastron_phase)], post_periastron_list[np.argmin(post_periastron_phase)]]
 
@@ -278,6 +281,7 @@ class Plot_Functions:
             N_grids = data.ngrid()
             # NG_Mask = data.get_3Darray('NG_Mask')
             baseline_data = data.get_3Darray(self.Quantity)
+            data.close()
             # fluid_parameter = np.multiply(baseline_data['data'], NG_Mask['data'])
             fluid_parameter = baseline_data['data']
             dims_min = (baseline_data['min_extents'] * units.cm).to(units.astrophys.au)
@@ -308,12 +312,23 @@ class Plot_Functions:
                                     origin="lower",
                                     vmin=self.Tolerance[0], vmax=self.Tolerance[1]
                                     )
+
+                    label = r"$\log_{10}$" + f"({quantity_dict[self.Quantity]}) "   
+
+
+
                 else:
-                     image = ax[num].imshow(sliced_data, interpolation="nearest", cmap=colormap,
+                    image = ax[num].imshow(sliced_data, interpolation="nearest", cmap=colormap,
                                     extent=extents,
                                     origin="lower",
                                     vmin=self.Tolerance[0], vmax=self.Tolerance[1]
-                                    )                   
+                                    )                  
+
+                    label = fr"{quantity_dict[self.Quantity]} " 
+
+            if not self.Quantity == 'Tr000_WIND':
+                label = label + f"({unit_dict[self.Quantity]})" 
+            
 
             phase = str(f"{((self.period + time)/self.period):.2f}")
             st = r"$\phi$ = " + phase 
@@ -327,13 +342,13 @@ class Plot_Functions:
         cbaxes = threeplotfig.add_axes([ax[num-1].get_position().x1+0.01,ax[num-1].get_position().y0,0.02,ax[num-1].get_position().height])
         cb = threeplotfig.colorbar(image, ax=ax[num-1], orientation="vertical", cax=cbaxes, pad=3.0)
         if (self.Quantity == 'Density'): 
-            cb.set_label(r"$\log_{10}$ "+r"$(\rho)$" + f" ({unit_dict[self.Quantity]})", fontsize=8, labelpad=4)
+            cb.set_label(label, fontsize=8, labelpad=4)
         else:
-            cb.set_label(r"$\log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
+            cb.set_label(label, fontsize=8, labelpad=2)
         tick_locator = ticker.MaxNLocator(nbins=5)
         cb.locator = tick_locator
         tick_font_size = 8
         cb.ax.tick_params(labelsize=tick_font_size)
         cb.update_ticks()
 
-        plt.savefig(f"{self.ImageDir}/3sliceimage{str(index).zfill(3)}.png", bbox_inches="tight", dpi=500)
+        plt.savefig(f"{self.ImageDir}/3sliceimage_{self.Quantity}_{self.Surface}.png", bbox_inches="tight", dpi=500)
