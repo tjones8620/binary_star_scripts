@@ -39,7 +39,7 @@ class ArgumentInputs:
         self.plot = args.plot
         self.ani = args.animate
 
-class BinarySystem():
+class BinarySystem:
     G = const.G.cgs
     M_sun = const.M_sun.cgs
     AU = const.au.cgs
@@ -62,7 +62,6 @@ class BinarySystem():
 
         self.orb_sol = self.integrate_orbit(k=1, **init_cond)
 
-        # self.d_mag = self.get_d_mag()
 
 
     @staticmethod
@@ -148,19 +147,22 @@ class BinarySystem():
     def plot_binary_orbit(self, sol, make_animation=False, length=10, set_fps=30, int_time=50):
 
         x1, y1, x2, y2, vx1, vy1, vx2, vy2 = sol
-        fig, ax = plt.subplots(figsize=(6,6))
-        ax.plot(x1, y1, ls = "--", color="w", lw=1, label="WR star")
-        ax.plot(x2, y2, ls = "--", color="w", lw=1, label="O star")
+        x1_au, y1_au = (x1*u.cm).to(u.au).value, (y1*u.cm).to(u.au).value
+        x2_au, y2_au = (x2*u.cm).to(u.au).value, (y2*u.cm).to(u.au).value
+        
+        fig, ax = plt.subplots(figsize=(5,3.5))
+        ax.plot(x1_au, y1_au, label="WR star")
+        ax.plot(x2_au, y2_au, label="O star")
         ln1, = plt.plot([], [], 'o', lw=3, markersize=10, color="orange")
         text = plt.text(0.6, 0.85, '', color='white', transform=ax.transAxes, fontsize = 10)
         # ax.text(0.7, 0.7, '',transform=ax.transAxes)
-        ax.set_xlim(-1.2*np.abs(x1).max(), 1.2*np.abs(x2).max())
-        ax.set_ylim(-1.2*((np.abs(x1).max() + np.abs(x2).max())/2), 1.2*((np.abs(x1).max() + np.abs(x2).max())/2))
+        ax.set_xlim(-1.2*np.abs(x1_au).max(), 1.2*np.abs(x2_au).max())
+        ax.set_ylim(-0.6*((np.abs(x1_au).max() + np.abs(x2_au).max())/2), 0.6*((np.abs(x1_au).max() + np.abs(x2_au).max())/2))
         ax.set_aspect(aspect=1)
-        ax.set_facecolor('k')
-        ax.set_xlabel("x [cm]", fontsize=8)
-        ax.set_ylabel("y [cm]", fontsize=8)
-        ax.legend(loc="upper right", fontsize=8, frameon=True)
+        # ax.set_facecolor('k')
+        ax.set_xlabel("x (AU)", fontsize=8)
+        ax.set_ylabel("y (AU)", fontsize=8)
+        ax.legend(loc="upper right")
         plt.savefig(os.path.join(os.path.abspath(os.path.dirname(__file__)),f"orbit_{self.name}.png"), dpi=300)
 
         if make_animation==True:
@@ -176,26 +178,25 @@ class BinarySystem():
             
             t_array_yr = self.t_array/(365*24*60*60)
 
+            # phase_array = t_array_yr/self.Period
 
-            x1_au, y1_au = (x1*u.cm).to(u.au).value, (y1*u.cm).to(u.au).value
-            x2_au, y2_au = (x2*u.cm).to(u.au).value, (y2*u.cm).to(u.au).value
+
 
             def animate(i):
                 ln1.set_data([x1_au[::spacing][i], x2_au[::spacing][i]], [y1_au[::spacing][i], y2_au[::spacing][i]])
                 text.set_text('Time = {:.1f} Years'.format(t_array_yr[::spacing][i]))
             fig, ax = plt.subplots(figsize=(6,6))
             # ax.set_title(f"Orbital Motion of {self.name}")
-            ax.plot(x1_au, y1_au, ls = "--", color="w", lw=1)
-            ax.plot(x2_au, y2_au, ls = "--", color="w", lw=1)
+            ax.plot(x1_au, y1_au, ls = "--", lw=1)
+            ax.plot(x2_au, y2_au, ls = "--", lw=1)
             ln1, = plt.plot([], [], '*', lw=3, markersize=10, color="yellow")
             text = plt.text(0.6, 0.85, '', color='white', transform=ax.transAxes, fontsize = 10)
             # ax.text(0.7, 0.7, '',transform=ax.transAxes)
             ax.set_xlim(-1.2*np.abs(x1_au).max(), 1.2*np.abs(x2_au).max())
-            ax.set_ylim(-1.2*((np.abs(x1_au).max() + np.abs(x2_au).max())/2), 1.2*((np.abs(x1_au).max() + np.abs(x2_au).max())/2))
+            ax.set_ylim(-0.6*((np.abs(x1_au).max() + np.abs(x2_au).max())/2), 0.6*((np.abs(x1_au).max() + np.abs(x2_au).max())/2))
             ax.set_aspect(aspect=1)
-            ax.set_facecolor('k')
-            ax.set_xlabel("x [AU]", fontsize=8)
-            ax.set_ylabel("y [AU]", fontsize=8)
+            ax.set_xlabel("x (AU)", fontsize=8)
+            ax.set_ylabel("y (AU)", fontsize=8)
             ani = animation.FuncAnimation(fig, animate, frames=num_frames, interval=int_time)
             ani.save(f'{self.name}_orbit.gif',writer='pillow',fps=set_fps, dpi=200)
 
@@ -290,10 +291,8 @@ class BinarySystem():
 
 def main():
     cmdargs = ArgumentInputs()
-    binary = BinarySystem(0.8993, 2895, 10.31, 29.27, "WR140")
     binary = BinarySystem(m1=cmdargs.mass1, m2=cmdargs.mass2, P=cmdargs.period, e=cmdargs.eccentricity, name=cmdargs.name)
     
-
     headers = ['Quantity', 'Star 1', 'Star 2']
 
     masses = ['Mass [Msun]', f"{binary.m1}", f"{binary.m2}"]

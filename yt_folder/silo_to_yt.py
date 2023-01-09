@@ -1,3 +1,5 @@
+__author__ = "Thomas Jones"
+
 from pypion.ReadData import ReadData
 import yt
 import os
@@ -6,51 +8,74 @@ import numpy as np
 import re
 
 def make_snapshots(data_path):
-        ########## Cataloging silo files ###############################
-        # Get the list of silo files
-        silo_files = os.listdir(data_path)
-        silo_files = sorted([f for f in silo_files if f.endswith('.silo')])
-        filename=(silo_files[0]).replace('_level00_0000.00000000.silo','')
-        
-        print("Info from silo files:")
-        print(f"Basename of silo files: {filename}")
+    """
+    Function to make snapshots of silo files.
 
-        file_list = glob.glob(os.path.join(data_path, '*.silo'), recursive=False)
+    Input: path to silo files
+    Output: list of snapshots - each snapshot is a list of silo files of different levels at the same time instant.
 
-        level_list = []
-        files = []
+    Example:
+    evolution = make_snapshots(data_path)
+    
+    """
+    ########## Cataloging silo files ###############################
+    # Get the list of silo files
+    silo_files = os.listdir(data_path)
+    silo_files = sorted([f for f in silo_files if f.endswith('.silo')])
+    filename=(silo_files[0]).replace('_level00_0000.00000000.silo','')
+    
+    print("Info from silo files:")
+    print(f"Basename of silo files: {filename}")
 
-        for file in file_list:
-            level = re.search('_level(.*)_', file)
-            if level == None:
-                pass
-            else:
-                level = level.group(1)
-                if not level in level_list:
-                    level_list.append(level)
-        level_list.sort()
+    file_list = glob.glob(os.path.join(data_path, '*.silo'), recursive=False)
 
-        ########## Categorizing data files into levels #################
-        if len(level_list) == 1: 
-            print('Simulation Info: Single level')
-            catalog = []
-            files = sorted(glob.glob(filename + '_0000.*.silo'))
-            catalog.append(files)
+    level_list = []
+    files = []
+
+    for file in file_list:
+        level = re.search('_level(.*)_', file)
+        if level == None:
+            pass
         else:
-            print(f'Simulation Info: {len(level_list)} levels')
-            catalog = []
-            for i in range(len(level_list)):
-                files = sorted(glob.glob(os.path.join(data_path, f"{filename}_level{level_list[i]}_0000.*.silo")))
-                catalog.append(files)
-                
+            level = level.group(1)
+            if not level in level_list:
+                level_list.append(level)
+    level_list.sort()
 
-        # Bundle silo files of different levels of same time instant into a snapshot.
-        evolution = np.array(catalog).T
-        print(f"Number of snapshots: {evolution.shape[0]}")
+    ########## Categorizing data files into levels #################
+    if len(level_list) == 1: 
+        print('Simulation Info: Single level')
+        catalog = []
+        files = sorted(glob.glob(filename + '_0000.*.silo'))
+        catalog.append(files)
+    else:
+        print(f'Simulation Info: {len(level_list)} levels')
+        catalog = []
+        for i in range(len(level_list)):
+            files = sorted(glob.glob(os.path.join(data_path, f"{filename}_level{level_list[i]}_0000.*.silo")))
+            catalog.append(files)
+            
 
-        return evolution
+    # Bundle silo files of different levels of same time instant into a snapshot.
+    evolution = np.array(catalog).T
+    print(f"Number of snapshots: {evolution.shape[0]}")
 
-def get_ds(file, quantities=["density"]) -> yt.data_objects.static_output.Dataset:
+    return evolution
+
+def get_ds(file, quantities=["density"], **kwargs) -> yt.data_objects.static_output.Dataset:
+
+    """
+    Function to create a yt dataset from a silo file.
+    Input: snapshot of silo file (list of filepaths for a single snapshot), list of quantities to be loaded
+    Output: yt dataset
+
+    Example:
+    evolution = make_snapshots(data_path)
+    file = evolution[0]
+    ds = get_ds(file, quantities=["density", "temperature", "velocity", "magnetic_field"])
+
+    """
+
     data = ReadData(file)
     sim_time = data.sim_time()
     N_levels = data.nlevels()
@@ -60,11 +85,6 @@ def get_ds(file, quantities=["density"]) -> yt.data_objects.static_output.Datase
     # Arrays for quantities
     if quantities.__contains__("density"):
         data_den = data.get_3Darray("Density")['data']
-        if quantities.__contains__("density_squared"):
-            data_den2 = np.multiply(data_den, data_den)
-        else:
-            pass
-
     if quantities.__contains__("temperature"):
         data_temp = data.get_3Darray("Temperature")['data']
     if quantities.__contains__("pressure"):
@@ -81,16 +101,6 @@ def get_ds(file, quantities=["density"]) -> yt.data_objects.static_output.Datase
         data_Bx = data.get_3Darray("MagneticFieldX")['data']
         data_By = data.get_3Darray("MagneticFieldY")['data']
         data_Bz = data.get_3Darray("MagneticFieldZ")['data']
-    
-    if quantities.__contains__("I_sync"):
-        data_Bx = np.array(data.get_3Darray("MagneticFieldX")['data'])
-        data_By = np.array(data.get_3Darray("MagneticFieldY")['data'])
-        data_Bz = np.array(data.get_3Darray("MagneticFieldZ")['data'])
-        data_bmag = np.sqrt(data_Bx**2 + data_By**2 + data_Bz**2)
-        data_pressure = data.get_3Darray("Pressure")['data']
-        data_Isync = np.multiply(data_bmag**3/2, data_pressure)
-    
-
 
     grid_size = np.array(N_grids)/max(N_grids) # Normalized grid size
 
@@ -100,16 +110,10 @@ def get_ds(file, quantities=["density"]) -> yt.data_objects.static_output.Datase
 
     bbox = np.array([np.zeros(3), grid_size]).T
 
-
     i = 0
     for g in grid_data:
         if quantities.__contains__("density"):
             g[("gas", "density")] = (data_den[i], "g/cm**3")
-            if quantities.__contains__("density_squared"):
-                g[("gas", "density_squared")] = (data_den2[i], "g**2/cm**6")
-            else:
-                pass
-
         if quantities.__contains__("temperature"):
             g[("gas", "temperature")] = (data_temp[i], "K")
         if quantities.__contains__("pressure"):
@@ -117,7 +121,7 @@ def get_ds(file, quantities=["density"]) -> yt.data_objects.static_output.Datase
         if quantities.__contains__("NG_Mask"):
             g[("gas", "NG_Mask")] = (data_ngmask[i], "K")
         if quantities.__contains__("windtracer"):
-            g[("gas", "windtr")] = (data_windtr[i], "")
+            g[("gas", "windtracer")] = (data_windtr[i], "")
         if quantities.__contains__("velocity"):
             g[("gas", "velocity_x")] = (data_velx[i], "cm/s")
             g[("gas", "velocity_y")] = (data_vely[i], "cm/s")
@@ -127,12 +131,9 @@ def get_ds(file, quantities=["density"]) -> yt.data_objects.static_output.Datase
             g[("gas", "magnetic_field_y")] = (data_By[i], "G")
             g[("gas", "magnetic_field_z")] = (data_Bz[i], "G")
 
-        if quantities.__contains__("I_sync"):
-            g[("gas", "I_sync")] = (data_Isync[i], "G**3/cm**6")
-
         i += 1
 
-    ds = yt.load_amr_grids(grid_data, N_grids, length_unit=f"{Dom_size} * cm", geometry=("cartesian", ("z","y","x")), sim_time=sim_time, bbox=bbox)
+    ds = yt.load_amr_grids(grid_data, N_grids, length_unit=f"{Dom_size} * cm", geometry=("cartesian", ("z","y","x")), sim_time=sim_time+kwargs.get("start_time", 0), bbox=bbox, time_unit="s", unit_system="cgs")
     return ds
 
 

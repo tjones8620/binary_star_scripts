@@ -260,16 +260,28 @@ class Plot_Functions:
             pre_per_phase = 1 - d_phase
             post_per_phase = 1 + d_phase
 
-            if phase_str == "1.00":
+            # if phase_str == "1.00":
+            #     periastron_list.append(k)
+            #     periastron_phase.append(abs(phase - 1.0))
+            # elif phase_str == f"{pre_per_phase}":
+            #     pre_periastron_list.append(k)
+            #     pre_periastron_phase.append(abs(phase - pre_per_phase))
+            # elif phase_str == f"{post_per_phase}":
+            #     post_periastron_list.append(k)
+            #     post_periastron_phase.append(abs(phase - post_per_phase))
+
+            # print(round(phase, len(str(d_phase))-2))
+
+            if round(phase, len(str(d_phase))-2) == round(1, len(str(d_phase))-2):
                 periastron_list.append(k)
                 periastron_phase.append(abs(phase - 1.0))
-            elif phase_str == f"{pre_per_phase}":
+            elif round(phase, len(str(d_phase))-2) == round(pre_per_phase, len(str(d_phase))-2):
                 pre_periastron_list.append(k)
                 pre_periastron_phase.append(abs(phase - pre_per_phase))
-            elif phase_str == f"{post_per_phase}":
+            elif round(phase, len(str(d_phase))-2) == round(post_per_phase, len(str(d_phase))-2):
                 post_periastron_list.append(k)
                 post_periastron_phase.append(abs(phase - post_per_phase))
-            
+                        
         
         plot_indices = [pre_periastron_list[np.argmin(pre_periastron_phase)], periastron_list[np.argmin(periastron_phase)], post_periastron_list[np.argmin(post_periastron_phase)]]
 
@@ -330,7 +342,7 @@ class Plot_Functions:
                 label = label + f"({unit_dict[self.Quantity]})" 
             
 
-            phase = str(f"{((self.period + time)/self.period):.2f}")
+            phase = str(f"{((self.period + time)/self.period):.{len(str(d_phase))-2}f}")
             st = r"$\phi$ = " + phase 
             ax[num].text(0.7, 0.9, st, color="black", fontsize=8, transform=ax[num].transAxes, 
                     bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=1', alpha=0.5))
@@ -351,4 +363,4 @@ class Plot_Functions:
         cb.ax.tick_params(labelsize=tick_font_size)
         cb.update_ticks()
 
-        plt.savefig(f"{self.ImageDir}/3sliceimage_{self.Quantity}_{self.Surface}.png", bbox_inches="tight", dpi=500)
+        plt.savefig(f"{self.ImageDir}/3sliceimage_{self.Quantity}_{self.Surface}.png", bbox_inches="tight", dpi=900)
