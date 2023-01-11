@@ -63,8 +63,20 @@ class XrayLum:
         else:
             ax.set_yscale('linear')
 
-        ax.plot(self.df['time [d]'], self.df['2-10'], linestyle='solid', label='L(2keV - 10keV)')
-        ax.plot(self.df['time [d]'], self.df['0.3-2'], linestyle='solid', label='L(0.3keV - 2keV)')
+        time = self.df['time [d]']
+        lum1 = self.df['2-10']
+        lum2 = self.df['0.3-2']
+        dataxmin = kwargs.get('dataxmin', None)
+        dataxmax = kwargs.get('dataxmax', None)
+        indices = np.where(np.logical_and(dataxmin <= time, time <= dataxmax))[0]
+        
+        if dataxmin is not None and dataxmax is not None:
+            time = time[indices]
+            lum1 = lum1[indices]
+            lum2 = lum2[indices]
+
+        ax.plot(time, lum1, linestyle='solid', label='L(2keV - 10keV)')
+        ax.plot(time, lum2, linestyle='solid', label='L(0.3keV - 2keV)')
         ax.legend(loc='upper left', ncol=1)
         ax.set_xlim(kwargs.get('xmin', None), kwargs.get('xmax', None))
         ax.set_ylim(kwargs.get('ymin', None), kwargs.get('ymax', None))
@@ -83,9 +95,16 @@ class XrayLum:
             lum = self.df['0.3-2']
             label = 'L(0.3keV - 2keV)'
 
-        ax.plot(self.df['time [d]'], lum, linestyle='solid', label=label)
-        # ax.plot(self.df['time [d]'], self.df['0.3-2'], linestyle='solid', label='L(0.3keV - 2keV)')
-        # ax.legend(loc='upper left', ncol=1)
+        time = self.df['time [d]']
+        dataxmin = kwargs.get('dataxmin', None)
+        dataxmax = kwargs.get('dataxmax', None)
+        indices = np.where(np.logical_and(dataxmin <= time, time <= dataxmax))[0]
+        
+        if dataxmin is not None and dataxmax is not None:
+            time = time[indices]
+            lum = lum[indices]
+
+        ax.plot(time, lum, linestyle='solid', label=label)
         ax.set_xlim(kwargs.get('xmin', None), kwargs.get('xmax', None))
         ax.set_ylim(kwargs.get('ymin', None), kwargs.get('ymax', None))
         plt.savefig(os.path.join(self.image_folder, f'xray-lum-{self.name}-{band}.png'), bbox_inches='tight', dpi=kwargs.get('dpi', 300))
@@ -95,48 +114,32 @@ class XrayLum:
         pass
 
 def main():
-    # path = os.path.join(home, "code/project/scripts/xray-luminosity/xray-tables/xray-lum-wr140-mhd-n256.txt")
-    # start_time = -2.671e7
-    # image_folder = os.path.join(home, "code/project/images/xray-luminosity/wr140-mhd-n256")
-    # plot = XrayLum(path=path, start_time=start_time, image_folder=image_folder, name='wr140-mhd-n256')
-    # # plot.plot_xray_lum()
-    # fig1,ax1 = plot.plot_hardsoftband(xmin=-70,xmax=90)
+    path = os.path.join(home, "code/project/scripts/xray-luminosity/xray-tables/xray-lum-wr140-mhd-n256.txt")
+    start_time = -2.671e7
+    image_folder = os.path.join(home, "code/project/images/xray-luminosity/wr140-mhd-n256")
+    plot = XrayLum(path=path, start_time=start_time, image_folder=image_folder, name='wr140-mhd-n256')
+    fig, ax = plot.plot_hardsoftband(xmin=-100,xmax=100, ymin=0, ymax = 1.5e35, dataxmin=-100, dataxmax=100)
     # fig4, ax4 = plot.plot_band(xmin=-180,xmax=90, band="hard")
 
-    # path = os.path.join(home, "code/project/scripts/xray-luminosity/xray-tables/xray-lum-wr140-hydro-n256.txt")
-    # start_time = -7.25e6
-    # image_folder = os.path.join(home, "code/project/images/xray-luminosity/wr140-hydro-n256")
-    # plot = XrayLum(path=path, start_time=start_time, image_folder=image_folder, name='wr140-hydro-n256')
-    # # plot.plot_xray_lum()
-    # fig2, ax2 = plot.plot_hardsoftband(xmin=-70,xmax=90)
+    path = os.path.join(home, "code/project/scripts/xray-luminosity/xray-tables/xray-lum-wr140-hydro-n256.txt")
+    start_time = -7.25e6
+    image_folder = os.path.join(home, "code/project/images/xray-luminosity/wr140-hydro-n256")
+    plot = XrayLum(path=path, start_time=start_time, image_folder=image_folder, name='wr140-hydro-n256')
+    fig, ax = plot.plot_hardsoftband(xmin=-100,xmax=100, ymin=0, ymax = 1.5e35, dataxmin=-65, dataxmax=100)
+
+    path = os.path.join(home, "code/project/scripts/xray-luminosity/xray-tables/xray-lum-wr140-hydro-accel-n256.txt")
+    start_time = -7.25e6
+    image_folder = os.path.join(home, "code/project/images/xray-luminosity/wr140-hydro-accel-n256")
+    plot = XrayLum(path=path, start_time=start_time, image_folder=image_folder, name='wr140-hydro-accel-n256')
+    fig, ax = plot.plot_hardsoftband(xmin=-100,xmax=100, ymin=0, ymax = 1.5e35, dataxmin=-50, dataxmax=50)
+    # fig, ax = plot.plot_band(xmin=-100,xmax=100, ymin=0, ymax = 1.5e35, dataxmin=-50, dataxmax=50, band="hard")
 
     path = os.path.join(home, "code/project/scripts/xray-luminosity/xray-tables/xray-lum-wr140-compton-n128-new-updated.txt")
-    start_time = -1.24e7
-    image_folder = os.path.join(home, "code/project/images/xray-luminosity/wr140-mhd-compton-n128-new")
-    plot = XrayLum(path=path, start_time=start_time, image_folder=image_folder, name='wr140-mhd-compton-new-test-n128')
-    # plot.plot_xray_lum()
-    fig3, ax3 = plot.plot_band(xmin = -120, xmax = 120, band="hard")
-    fig3, ax3 = plot.plot_hardsoftband(xmin = -120, xmax = 120)
-
-    # fig3, ax3 = plt.subplots(nrows=2,ncols=1,figsize=(5, 7))
-    # ax3[0].plot(ax1.get_lines()[0].get_data()[0], ax1.get_lines()[0].get_data()[1], linestyle='solid', label='$L(2keV - 10keV)$')
-    # ax3[0].plot(ax1.get_lines()[1].get_data()[0], ax1.get_lines()[1].get_data()[1], linestyle='solid', label='$L(0.3keV - 2keV)$')
-    # ax3[0].set_xlabel('Time (days relative to periastron)')
-    # ax3[0].set_ylabel('X-ray Luminosity ($erg$ $s^{-1}$)')
-    # ax3[0].legend(loc='upper right', ncol=1, framealpha=1, frameon=True, fontsize=5)
-    # ax3[0].set_xlim(-60,90)
-    # ax3[0].set_title('MHD')
-
-    # ax3[1].plot(ax2.get_lines()[0].get_data()[0], ax2.get_lines()[0].get_data()[1], linestyle='solid', label='$L(2keV - 10keV)$')
-    # ax3[1].plot(ax2.get_lines()[1].get_data()[0], ax2.get_lines()[1].get_data()[1], linestyle='solid', label='$L(0.3keV - 2keV)$')
-    # ax3[1].set_xlabel('Time (days relative to periastron)')
-    # # ax3[1].set_ylabel('X-ray Luminosity ($erg$ $s^{-1}$)')
-    # ax3[1].legend(loc='upper right', ncol=1, framealpha=1, frameon=True, fontsize=5)
-    # ax3[1].set_xlim(-60,90)
-    # ax3[1].set_title('Hydro')
-    # plt.savefig(os.path.join(home, "code/project/images/xray-luminosity/wr140-mhd-hydro-n256.png"), bbox_inches='tight', dpi=300)
-
-
+    start_time = -1.25e7
+    image_folder = os.path.join(home, "code/project/images/xray-luminosity/wr140-compton-n128-new")
+    plot = XrayLum(path=path, start_time=start_time, image_folder=image_folder, name='wr140-mhd-compton-n128')
+    fig, ax = plot.plot_hardsoftband(xmin=-100,xmax=100, ymin=0, ymax = 1.5e35, dataxmin=-100, dataxmax=100)
+    # fig, ax = plot.plot_band(xmin=-100,xmax=100, ymin=0, ymax = 1.5e35, dataxmin=-50, dataxmax=50, band="hard")
 
 
 if __name__ == "__main__":
