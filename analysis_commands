@@ -1,0 +1,14 @@
+# Getting wind tracer plot for 256 hydro simulation
+python PlottingData.py /mnt/massive-stars/data/thomas_simulations/wr140-sims/late_start/wr140-hydro-n256/ ~/code/project/images/ -q Tr000_WIND --tol 0 1 --cmap RdBu --log False
+
+# Getting wind tracer plot for 126 mhd-compton simulation
+python PlottingData.py /mnt/massive-stars/data/thomas_simulations/wr140-sims/compton_cool/compton_mhd_l7n128_v2/ ~/code/project/images/ -q Tr000_WIND --tol 0 1 --cmap RdBu --log False
+
+
+
+# Running Xray projection for hydro sim along for XZ plane
+mpirun -np 8 /mnt/local/pion/dev/build/projection3D /mnt/massive-stars/data/thomas_simulations/wr140-sims/late_start/wr140-hydro-n256/ wr140_hydro_cool_d3l7n256_level00_0000  /mnt/massive-stars/data/thomas_simulations/wr140-sims/late_start/wr140-hydro-n256/proj/proj_XY/wr140_hydro_cool_d3l7n256_XY 1 1 YP XP 0 20 0 3 7
+
+# Running total luminosity for hydro simulation
+cd /home/visitor_ap4/code/project/scripts/xray-luminosity
+python total_lum.py /mnt/massive-stars/data/thomas_simulations/wr140-sims/late_start/wr140-hydro-n256/ wr140_hydro_cool_d3l7n256 xray-lum-wr140-hydro-n256 wr140-hydro-n256 3d
