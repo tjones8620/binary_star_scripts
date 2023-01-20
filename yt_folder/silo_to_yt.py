@@ -80,7 +80,8 @@ def get_ds(file, quantities=["density"], **kwargs) -> yt.data_objects.static_out
     sim_time = data.sim_time()
     N_levels = data.nlevels()
     N_grids = data.ngrid()[::-1]
-    Dom_size = max(data.level_max()) - max(data.level_min())
+    Dom_size = max(data.level_max()) - min(data.level_min())
+    print(f"Simulation Info: {N_levels} levels, {N_grids} grids, {Dom_size} cm")
 
     # Arrays for quantities
     if quantities.__contains__("density"):
@@ -138,18 +139,34 @@ def get_ds(file, quantities=["density"], **kwargs) -> yt.data_objects.static_out
 
 
 
-def get_ts(files, quantities=["density"]):
+# def get_ts(files, quantities=["density"]):
     
+#     ds_list = []
+#     for file in files:
+#         ds = get_ds(file, quantities)
+#         ds_list.append(ds)
+#         del ds
+
+#     global ts    
+#     ts = yt.DatasetSeries(ds_list)
+
+#     return ts
+
+def get_ts(evolution, **kwargs):
+
     ds_list = []
-    for file in files:
-        ds = get_ds(file, quantities)
-        ds_list.append(ds)
-        del ds
 
-    global ts    
-    ts = yt.DatasetSeries(ds_list)
+    start = kwargs.get('start', 1)
+    end = kwargs.get('end', 10)
+    step = kwargs.get('step', 1)
 
-    return ts
+    # Load the desired snapshots
+    for i in range(start, end, step):
+        ds_list.append(get_ds(evolution[i], quantities=kwargs.get("quantities", ["density"]), start_time=kwargs.get("start_time", 0)))
 
+    print("Number of datasets: ", len(ds_list))
+    # Create time series object
+    return yt.DatasetSeries(ds_list)
+    del ds_list
 
 

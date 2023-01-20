@@ -1,6 +1,21 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-__author__ = "Arun Mathew, Thomas Jones"
+"""
+This module contains the Plot_Functions class which is used to plot the simulation data.
+
+The Plot_Functions class contains methods for plotting the simulation data in different ways.
+
+The class is initialized with the path to the simulation data, the desired fluid quantity, the
+tolerance for the colorbar, the coordinate plane, and the image directory. 
+
+The class then finds the dimensions of the simulation and creates a directory for the images. 
+
+The class can also be used to make movies of the simulation
+data. The class can also be used to plot the orbital phase of the simulation data. 
+"""
+
+__author__ = "Thomas Jones"
 
 # Import the relevant standard packages ###############################
 import os
@@ -14,13 +29,13 @@ import moviepy.video.io.ImageSequenceClip
 from pypion.ReadData import ReadData
 plt.style.use("science")
 
-quantity_dict = {'Density':r'$\rho$', 'Temperature':"T", 'Velocity': "v", 'Tr000_WIND': "Wind Tracer"}
-unit_dict = {'Density': "$g \, cm^{-3}$", 'Temperature': "K", 'Velocity': "$cm \, s^{-1}$", "Tr000_WIND": ""}
-
 ###########################################################################
 # Plot functions for different dimensions.
 class Plot_Functions:
-    def __init__(self, path, image_dir, fluid_quantity, tolerance, plane, start_time, period):
+    quantity_dict = {'Density':r'$\rho$', 'Temperature':"T", 'Velocity': "v", 'Tr000_WIND': "Wind Tracer"}
+    unit_dict = {'Density': "$g \, cm^{-3}$", 'Temperature': "K", 'Velocity': "$cm \, s^{-1}$", "Tr000_WIND": ""}
+
+    def __init__(self, path, image_dir, fluid_quantity="Density", tolerance=[-20,13], plane="XY", start_time=0, period=7.992):
         ########### Defining path to SILO files #######################
         self.data_path = path
         if os.path.exists(path):
@@ -112,37 +127,37 @@ class Plot_Functions:
         print(f'Simulation Info: {self.N_dims}D System')
         #End of making snapshots ***************************************************
 
-
     @staticmethod
     def create_image_dir(img_dir, *args):
         ImageDir = os.path.join(img_dir, f'SimulationPlots/{args[0]}/{args[1]}/{args[2]}')
-        try:
-            # Create target Directory
-            os.makedirs(ImageDir)  # changed mkdir to makedirs - creates nested folders
+
+        if not os.path.exists(ImageDir):
+            os.makedirs(ImageDir)
             print("Image directory" , ImageDir,  "created.")
-        except FileExistsError:
+        else:
             print("Image directory", ImageDir, "already exists.")
-
-            var = input("Do you want to clean up this directory? (y/n): ")
-            if var=="y":
-                print( "Continued with code")
-            elif var=="n":
-                print("Exiting script...")
-                exit()
-            else:
-                print("Invalid input - must be y/n")
-                exit()
-
-            print('Cleaning up the',  ImageDir, 'directory ...')
-            for f in os.listdir(ImageDir):
-                os.remove(os.path.join(ImageDir, f))
-            print('Directory cleaned up.')
         return ImageDir
-
 
     #######################################################################
     # 3D-Surface-Plotter
     def ThreeDSurfacePlotter(self, colormap='viridis', movie=False, log=True):
+
+        """
+        This function plots the 3D surface of the simulation.
+
+        Parameters
+        ----------
+        colormap : str, optional
+            The colormap to be used for the plot. The default is 'viridis'.
+        movie : bool, optional
+            If True, a movie of the simulation will be created. The default is False.
+        log : bool, optional
+            If True, the plot will be in log scale. The default is True.
+        
+        Returns
+        -------
+        None.
+        """
 
         print('3D-Surface-Plotter: Plotting', self.Surface, 'plane')
 
@@ -150,18 +165,16 @@ class Plot_Functions:
         if (self.Surface == 'XZ'): xlabel = 'x'; x = 0; ylabel = 'z'; y = 2 ; z = 1
         if (self.Surface == 'YZ'): xlabel = 'y'; x = 1; ylabel = 'z'; y = 2 ; z = 1
 
+        # Looping over all the snapshots
         for k in range(len(self.evolution)):
             data = ReadData(self.evolution[k])
             N_level = data.nlevels()
             N_grids = data.ngrid()
-            # NG_Mask = data.get_3Darray('NG_Mask')
             baseline_data = data.get_3Darray(self.Quantity)
-            # fluid_parameter = np.multiply(baseline_data['data'], NG_Mask['data'])
             fluid_parameter = baseline_data['data']
             dims_min = (baseline_data['min_extents'] * units.cm).to(units.astrophys.au)
             dims_max = (baseline_data['max_extents'] * units.cm).to(units.astrophys.au)
             time = ((baseline_data['sim_time'].value + self.start_time) * units.s).to(units.yr)
-
 
             fig, ax = plt.subplots()
             ax.set_xlim(dims_min[0][x].value, dims_max[0][x].value)
@@ -169,7 +182,8 @@ class Plot_Functions:
             ax.set_xlabel(f"{xlabel} ({str(dims_min.unit)})", fontsize=8)
             ax.set_ylabel(f"{ylabel} ({str(dims_min.unit)})", fontsize=8)
 
-            for l in range(N_level):  # plotting each levels
+            # Looping over all the levels
+            for l in range(N_level): 
 
                 plot_data = np.array(fluid_parameter)
                 
@@ -181,8 +195,6 @@ class Plot_Functions:
                 # Slicer ends #*********************************************************
             
                 extents = [dims_min[l][x].value, dims_max[l][x].value, dims_min[l][y].value, dims_max[l][y].value]
-
-                # if (self.Surface == 'YZ'): extents = [dims_min[l][y].value, dims_max[l][y].value, dims_min[l][x].value, dims_max[l][x].value]
 
                 if (log == True):
                     image = ax.imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
@@ -202,17 +214,19 @@ class Plot_Functions:
                     exit()
 
 
+            ######### Colorbar ########################################################
             cbaxes = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
             cb = fig.colorbar(image, ax=ax, orientation="vertical", cax=cbaxes, pad=0.0)
             if (self.Quantity == 'Density'): 
-                cb.set_label(r"$\log_{10}$ "+r"$(\rho)$" + f" ({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
+                cb.set_label(r"$\log_{10}$ "+r"$(\rho)$" + f" ({self.unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
             else:
-                cb.set_label(r"$\log_{10}$ " + f"{self.Quantity} " + f"({unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
+                cb.set_label(r"$\log_{10}$ " + f"{self.Quantity} " + f"({self.unit_dict[self.Quantity]})", fontsize=8, labelpad=2)
             cb.ax.tick_params(labelsize=8)
             tick_locator = ticker.MaxNLocator(nbins=5)
             cb.locator = tick_locator
             cb.update_ticks()
-        
+
+            ######### Phase ###########################################################
             phase = str(f"{((self.period + time)/self.period):.2f}")
             st = r"$\phi$ = " + phase 
             ax.text(0.8, 0.9, st, color="black", fontsize=8, transform=ax.transAxes, 
@@ -224,6 +238,7 @@ class Plot_Functions:
                   f'Saving snap-{str(k)} to image{str(k).zfill(3)}.png ...')
 
     
+        #### Movie ###############################################################
         if movie==True:
 
             image_folder=self.ImageDir
@@ -236,7 +251,35 @@ class Plot_Functions:
         else:
             pass
     
-    def three_time_slice(self, colormap='viridis', d_phase = 0.01, log=True):
+    def three_time_slice(self, colormap='viridis', d_phase = 0.01, log=True, zoom=1, plot_inset=False):
+
+        """
+        Function to plot three time slices of the simulation: pre-periastron, periastron, and post-periastron.
+        The time slices are determined by the phase of the simulation. The phase is calculated by dividing the
+        simulation time by the orbital period. 
+
+        Parameters
+        ----------
+        colormap : str, optional
+            Colormap to use for the plot. The default is 'viridis'.
+        
+        d_phase : float, optional
+            The phase difference between the pre-periastron, periastron, and post-periastron snapshots.
+            The default is 0.01.
+        
+        log : bool, optional
+            If True, the plot will be in log scale. The default is True.
+        
+        zoom : int, optional
+            Zoom factor for the plot. The default is 1.
+
+        plot_inset : bool, optional
+            If True, the plot will have an inset of the simulation domain. The default is False.
+        
+        Returns
+        -------
+        None.
+        """
 
         if (self.Surface == 'XY'): xlabel = 'x'; x = 0; ylabel = 'y'; y = 1 ; z = 2 
         if (self.Surface == 'XZ'): xlabel = 'x'; x = 0; ylabel = 'z'; y = 2 ; z = 1
@@ -260,18 +303,6 @@ class Plot_Functions:
             pre_per_phase = 1 - d_phase
             post_per_phase = 1 + d_phase
 
-            # if phase_str == "1.00":
-            #     periastron_list.append(k)
-            #     periastron_phase.append(abs(phase - 1.0))
-            # elif phase_str == f"{pre_per_phase}":
-            #     pre_periastron_list.append(k)
-            #     pre_periastron_phase.append(abs(phase - pre_per_phase))
-            # elif phase_str == f"{post_per_phase}":
-            #     post_periastron_list.append(k)
-            #     post_periastron_phase.append(abs(phase - post_per_phase))
-
-            # print(round(phase, len(str(d_phase))-2))
-
             if round(phase, len(str(d_phase))-2) == round(1, len(str(d_phase))-2):
                 periastron_list.append(k)
                 periastron_phase.append(abs(phase - 1.0))
@@ -291,18 +322,27 @@ class Plot_Functions:
             data = ReadData(self.evolution[index])
             N_level = data.nlevels()
             N_grids = data.ngrid()
-            # NG_Mask = data.get_3Darray('NG_Mask')
             baseline_data = data.get_3Darray(self.Quantity)
             data.close()
-            # fluid_parameter = np.multiply(baseline_data['data'], NG_Mask['data'])
             fluid_parameter = baseline_data['data']
             dims_min = (baseline_data['min_extents'] * units.cm).to(units.astrophys.au)
             dims_max = (baseline_data['max_extents'] * units.cm).to(units.astrophys.au)
             time = ((baseline_data['sim_time'].value + self.start_time) * units.s).to(units.yr)
 
-            ax[num].set_xlim(dims_min[0][x].value, dims_max[0][x].value)
-            ax[num].set_ylim(dims_min[0][y].value, dims_max[0][y].value)
+            ax[num].set_xlim(dims_min[0][x].value/zoom, dims_max[0][x].value/zoom)
+            ax[num].set_ylim(dims_min[0][y].value/zoom, dims_max[0][y].value/zoom)
             ax[num].set_xlabel(f"{xlabel} ({str(dims_min.unit)})", fontsize=8)
+
+            if plot_inset==True:
+                axins = ax[num].inset_axes([0.6, 0, 0.4, 0.4], transform=ax[num].transAxes)
+                axins.set_xlim(dims_min[0][x].value/(zoom*8), dims_max[0][x].value/(zoom*8))
+                axins.set_ylim(dims_min[0][y].value/(zoom*8), dims_max[0][y].value/(zoom*8))
+                axins.set_xticks([])
+                axins.set_yticks([])
+                axins.set_xlabel("")
+                axins.set_ylabel("")
+        
+            # ax.indicate_inset_zoom(axins, edgecolor="black")
 
 
             for l in range(N_level):  # plotting each levels
@@ -325,9 +365,14 @@ class Plot_Functions:
                                     vmin=self.Tolerance[0], vmax=self.Tolerance[1]
                                     )
 
-                    label = r"$\log_{10}$" + f"({quantity_dict[self.Quantity]}) "   
+                    label = r"$\log_{10}$" + f"({self.quantity_dict[self.Quantity]}) "   
 
-
+                    if axins==True:
+                        axins.imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
+                                    extent=extents,
+                                    origin="lower",
+                                    vmin=self.Tolerance[0], vmax=self.Tolerance[1]
+                                    )
 
                 else:
                     image = ax[num].imshow(sliced_data, interpolation="nearest", cmap=colormap,
@@ -336,11 +381,12 @@ class Plot_Functions:
                                     vmin=self.Tolerance[0], vmax=self.Tolerance[1]
                                     )                  
 
-                    label = fr"{quantity_dict[self.Quantity]} " 
+                    label = fr"{self.quantity_dict[self.Quantity]} " 
 
             if not self.Quantity == 'Tr000_WIND':
-                label = label + f"({unit_dict[self.Quantity]})" 
+                label = label + f"({self.unit_dict[self.Quantity]})" 
             
+            ax[num].indicate_inset_zoom(axins, edgecolor="black")
 
             phase = str(f"{((self.period + time)/self.period):.{len(str(d_phase))-2}f}")
             st = r"$\phi$ = " + phase 
@@ -364,3 +410,128 @@ class Plot_Functions:
         cb.update_ticks()
 
         plt.savefig(f"{self.ImageDir}/3sliceimage_{self.Quantity}_{self.Surface}.png", bbox_inches="tight", dpi=900)
+ 
+    def plot_orbital_phase(self, phase_choice, ax, colormap='viridis', zoom=1, log=False, plot_inset=False):
+        """
+        Plots a 2D slice of the simulation at a given orbital phase.
+
+        Parameters
+        ----------
+        phase_choice : float
+            The orbital phase at which to plot the slice.
+
+        ax : matplotlib.axes._subplots.AxesSubplot
+            The axes on which to plot the slice.
+
+        colormap : str, optional
+            The colormap to use for the slice. The default is 'viridis'.
+
+        zoom : float, optional
+            The factor by which to zoom in on the slice. The default is 1.
+
+        log : bool, optional
+            Whether to plot the slice on a log scale. The default is False.
+
+        plot_inset : bool, optional
+            Whether to plot an inset of the slice. The default is False.
+        
+        Returns
+        -------
+        None.
+
+        """
+        if (self.Surface == 'XY'): xlabel = 'x'; x = 0; ylabel = 'y'; y = 1 ; z = 2 
+        if (self.Surface == 'XZ'): xlabel = 'x'; x = 0; ylabel = 'z'; y = 2 ; z = 1
+        if (self.Surface == 'YZ'): xlabel = 'y'; x = 1; ylabel = 'z'; y = 2 ; z = 1
+
+        snapshot_list = []  # list of pre-periastron snapshots
+        snapshot_phase = [] # list of pre-periastron times
+
+        for k in range(len(self.evolution)):
+            data = ReadData(self.evolution[k])
+            sim_time = data.sim_time().value
+            data.close()
+            time = ((sim_time + self.start_time) * units.s).to(units.yr)
+            phase = ((self.period + time)/self.period).value
+
+            if round(phase, len(str(phase_choice))-2) == round(phase_choice, len(str(phase_choice))-2):
+                snapshot_list.append(k)
+                snapshot_phase.append(phase-phase_choice)
+            
+        index = snapshot_list[np.argmin(np.abs(snapshot_phase))]
+
+        
+        data = ReadData(self.evolution[index])
+        N_level = data.nlevels()
+        N_grids = data.ngrid()
+        baseline_data = data.get_3Darray(self.Quantity)
+        data.close()
+        fluid_parameter = baseline_data['data']
+        dims_min = (baseline_data['min_extents'] * units.cm).to(units.astrophys.au)
+        dims_max = (baseline_data['max_extents'] * units.cm).to(units.astrophys.au)
+        time = ((baseline_data['sim_time'].value + self.start_time) * units.s).to(units.yr)
+
+        ax.set_xlim(dims_min[0][x].value/zoom, dims_max[0][x].value/zoom)
+        ax.set_ylim(dims_min[0][y].value/zoom, dims_max[0][y].value/zoom)
+        ax.set_xlabel(f"{xlabel} ({str(dims_min.unit)})", fontsize=8)
+        ax.set_ylabel(f"{ylabel} ({str(dims_min.unit)})", fontsize=8)
+
+        if plot_inset==True:
+            axins = ax.inset_axes([0.6, 0, 0.4, 0.4], transform=ax.transAxes)
+            axins.set_xlim(dims_min[0][x].value/(zoom*8), dims_max[0][x].value/(zoom*8))
+            axins.set_ylim(dims_min[0][y].value/(zoom*8), dims_max[0][y].value/(zoom*8))
+            axins.set_xticks([])
+            axins.set_yticks([])
+            axins.set_xlabel("")
+            axins.set_ylabel("")
+            ax.indicate_inset_zoom(axins, edgecolor="black")
+
+        for l in range(N_level):  # plotting each levels
+
+            plot_data = np.array(fluid_parameter)
+            
+            # Slicer ###############################################################
+            slice_location = int(0.5 * N_grids[z])
+            if (self.Surface == 'YZ'): sliced_data = plot_data[l][:, :, slice_location - 1]
+            if (self.Surface == 'XZ'): sliced_data = plot_data[l][:, slice_location - 1, :]
+            if (self.Surface == 'XY'): sliced_data = plot_data[l][slice_location - 1, :, :]
+            # Slicer ends #*********************************************************
+        
+            extents = [dims_min[l][x].value, dims_max[l][x].value, dims_min[l][y].value, dims_max[l][y].value]
+
+            if log == True:
+                image = ax.imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
+                                extent=extents,
+                                origin="lower",
+                                vmin=self.Tolerance[0], vmax=self.Tolerance[1]
+                                )
+
+                label = r"$\log_{10}$" + f"({self.quantity_dict[self.Quantity]}) "   
+
+                if plot_inset==True:
+                    axins.imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
+                                extent=extents,
+                                origin="lower",
+                                vmin=self.Tolerance[0], vmax=self.Tolerance[1]
+                                )                
+
+            else:
+                image = ax.imshow(sliced_data, interpolation="nearest", cmap=colormap,
+                                extent=extents,
+                                origin="lower",
+                                vmin=self.Tolerance[0], vmax=self.Tolerance[1]
+                                )                  
+
+                label = fr"{self.quantity_dict[self.Quantity]} " 
+                
+                if plot_inset==True:
+                    axins.imshow(sliced_data, interpolation="nearest", cmap=colormap,
+                                extent=extents,
+                                origin="lower",
+                                vmin=self.Tolerance[0], vmax=self.Tolerance[1]
+                                )    
+
+        if not self.Quantity == 'Tr000_WIND':
+            label = label + f"({self.unit_dict[self.Quantity]})" 
+        
+
