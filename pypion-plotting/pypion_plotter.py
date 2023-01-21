@@ -334,9 +334,9 @@ class Plot_Functions:
             ax[num].set_xlabel(f"{xlabel} ({str(dims_min.unit)})", fontsize=8)
 
             if plot_inset==True:
-                axins = ax[num].inset_axes([0.6, 0, 0.4, 0.4], transform=ax[num].transAxes)
-                axins.set_xlim(dims_min[0][x].value/(zoom*8), dims_max[0][x].value/(zoom*8))
-                axins.set_ylim(dims_min[0][y].value/(zoom*8), dims_max[0][y].value/(zoom*8))
+                axins = ax[num].inset_axes([0.55, 0, 0.45, 0.45], transform=ax[num].transAxes)
+                axins.set_xlim(dims_min[0][x].value/(zoom*16), dims_max[0][x].value/(zoom*16))
+                axins.set_ylim(dims_min[0][y].value/(zoom*16), dims_max[0][y].value/(zoom*16))
                 axins.set_xticks([])
                 axins.set_yticks([])
                 axins.set_xlabel("")
@@ -367,7 +367,7 @@ class Plot_Functions:
 
                     label = r"$\log_{10}$" + f"({self.quantity_dict[self.Quantity]}) "   
 
-                    if axins==True:
+                    if plot_inset==True:
                         axins.imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
                                     extent=extents,
                                     origin="lower",

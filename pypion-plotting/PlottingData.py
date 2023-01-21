@@ -13,7 +13,7 @@ def main():
     # if plot.N_dims==3:
     #     plot.ThreeDSurfacePlotter(movie=inputs.make_movie, colormap=inputs.cmap)
 
-    plot.three_time_slice(log=inputs.log, colormap=inputs.cmap, d_phase=0.002, zoom=1)
+    plot.three_time_slice(log=inputs.log, colormap=inputs.cmap, d_phase=0.001, zoom=1, plot_inset=True)
 
 if __name__=="__main__":
     main()
