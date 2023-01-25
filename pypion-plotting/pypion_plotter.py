@@ -140,7 +140,7 @@ class Plot_Functions:
 
     #######################################################################
     # 3D-Surface-Plotter
-    def ThreeDSurfacePlotter(self, colormap='viridis', movie=False, log=True):
+    def ThreeDSurfacePlotter(self, colormap='viridis', movie=False, log=True, **kwargs):
 
         """
         This function plots the 3D surface of the simulation.
@@ -176,9 +176,9 @@ class Plot_Functions:
             dims_max = (baseline_data['max_extents'] * units.cm).to(units.astrophys.au)
             time = ((baseline_data['sim_time'].value + self.start_time) * units.s).to(units.yr)
 
-            fig, ax = plt.subplots()
-            ax.set_xlim(dims_min[0][x].value, dims_max[0][x].value)
-            ax.set_ylim(dims_min[0][y].value, dims_max[0][y].value)
+            fig, ax = plt.subplots(figsize=(5, 3.5))
+            ax.set_xlim(dims_min[0][x].value/kwargs.get("zoom",1), dims_max[0][x].value/kwargs.get("zoom",1))
+            ax.set_ylim(dims_min[0][y].value/kwargs.get("zoom",1), dims_max[0][y].value/kwargs.get("zoom",1))
             ax.set_xlabel(f"{xlabel} ({str(dims_min.unit)})", fontsize=8)
             ax.set_ylabel(f"{ylabel} ({str(dims_min.unit)})", fontsize=8)
 
@@ -227,9 +227,9 @@ class Plot_Functions:
             cb.update_ticks()
 
             ######### Phase ###########################################################
-            phase = str(f"{((self.period + time)/self.period):.2f}")
+            phase = str(f"{((self.period + time)/self.period):.4f}")
             st = r"$\phi$ = " + phase 
-            ax.text(0.8, 0.9, st, color="black", fontsize=8, transform=ax.transAxes, 
+            ax.text(0.7, 0.9, st, color="black", fontsize=8, transform=ax.transAxes, 
                     bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=1', alpha=0.5))
 
             plt.savefig(f"{self.ImageDir}/image{str(k).zfill(3)}.png", bbox_inches="tight", dpi=500)
@@ -246,12 +246,12 @@ class Plot_Functions:
                         for img in sorted(os.listdir(image_folder))
                         if img.endswith(".png")]
             clip = moviepy.video.io.ImageSequenceClip.ImageSequenceClip(image_files, fps=self.fps)
-            clip.write_videofile(f'{self.ImageDir}/{self.filename}_{self.Quantity}_{self.Surface}.mp4')
+            clip.write_videofile(f'{self.ImageDir}/{self.filename}_{self.Quantity}_{self.Surface}.mp4', bitrate="5000k")
         
         else:
             pass
     
-    def three_time_slice(self, colormap='viridis', d_phase = 0.01, log=True, zoom=1, plot_inset=False):
+    def three_time_slice(self, colormap='viridis', d_phase = 0.01, log=True, zoom=1, plot_inset=False, **kwargs):
 
         """
         Function to plot three time slices of the simulation: pre-periastron, periastron, and post-periastron.
@@ -374,6 +374,8 @@ class Plot_Functions:
                                     vmin=self.Tolerance[0], vmax=self.Tolerance[1]
                                     )
 
+                        ax[num].indicate_inset_zoom(axins, edgecolor=kwargs.get("inset_edgecolor", "black"))
+
                 else:
                     image = ax[num].imshow(sliced_data, interpolation="nearest", cmap=colormap,
                                     extent=extents,
@@ -386,7 +388,7 @@ class Plot_Functions:
             if not self.Quantity == 'Tr000_WIND':
                 label = label + f"({self.unit_dict[self.Quantity]})" 
             
-            ax[num].indicate_inset_zoom(axins, edgecolor="black")
+            
 
             phase = str(f"{((self.period + time)/self.period):.{len(str(d_phase))-2}f}")
             st = r"$\phi$ = " + phase 
@@ -400,16 +402,16 @@ class Plot_Functions:
         cbaxes = threeplotfig.add_axes([ax[num-1].get_position().x1+0.01,ax[num-1].get_position().y0,0.02,ax[num-1].get_position().height])
         cb = threeplotfig.colorbar(image, ax=ax[num-1], orientation="vertical", cax=cbaxes, pad=3.0)
         if (self.Quantity == 'Density'): 
-            cb.set_label(label, fontsize=8, labelpad=4)
+            cb.set_label(label, fontsize=12, labelpad=4)
         else:
-            cb.set_label(label, fontsize=8, labelpad=2)
+            cb.set_label(label, fontsize=12, labelpad=2)
         tick_locator = ticker.MaxNLocator(nbins=5)
         cb.locator = tick_locator
         tick_font_size = 8
         cb.ax.tick_params(labelsize=tick_font_size)
         cb.update_ticks()
 
-        plt.savefig(f"{self.ImageDir}/3sliceimage_{self.Quantity}_{self.Surface}.png", bbox_inches="tight", dpi=900)
+        plt.savefig(f"{self.ImageDir}/3sliceimage_{self.Quantity}_{self.Surface}.png", bbox_inches="tight", dpi=300)
  
     def plot_orbital_phase(self, phase_choice, ax, colormap='viridis', zoom=1, log=False, plot_inset=False):
         """
@@ -478,8 +480,8 @@ class Plot_Functions:
 
         if plot_inset==True:
             axins = ax.inset_axes([0.6, 0, 0.4, 0.4], transform=ax.transAxes)
-            axins.set_xlim(dims_min[0][x].value/(zoom*8), dims_max[0][x].value/(zoom*8))
-            axins.set_ylim(dims_min[0][y].value/(zoom*8), dims_max[0][y].value/(zoom*8))
+            axins.set_xlim(dims_min[0][x].value/(zoom*16), dims_max[0][x].value/(zoom*16))
+            axins.set_ylim(dims_min[0][y].value/(zoom*16), dims_max[0][y].value/(zoom*16))
             axins.set_xticks([])
             axins.set_yticks([])
             axins.set_xlabel("")

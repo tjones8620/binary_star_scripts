@@ -134,7 +134,7 @@ def get_ds(file, quantities=["density"], **kwargs) -> yt.data_objects.static_out
 
         i += 1
 
-    ds = yt.load_amr_grids(grid_data, N_grids, length_unit=f"{Dom_size} * cm", geometry=("cartesian", ("z","y","x")), sim_time=sim_time+kwargs.get("start_time", 0), bbox=bbox, time_unit="s", unit_system="cgs")
+    ds = yt.load_amr_grids(grid_data, N_grids, length_unit=f"{Dom_size} * cm", geometry=("cartesian", ("z","y","x")), sim_time=sim_time.value+kwargs.get("start_time", 0), bbox=bbox, time_unit="s", unit_system="cgs")
     return ds
 
 

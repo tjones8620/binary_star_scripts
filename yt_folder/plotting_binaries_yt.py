@@ -5,6 +5,9 @@ yt.set_log_level("ERROR")
 import matplotlib.pyplot as plt
 import astropy.units as u
 import numpy as np
+import pandas as pd
+import sigfig
+from yt.visualization.volume_rendering.api import PointSource
 # print(plt.style.available)
 # plt.style.use('nature')
 # plt.rcParams['font.family'] = 'sans-serif'
@@ -298,38 +301,115 @@ class YTPlotFunction():
 
         fig.savefig(os.path.join(self.img_dir, f"Bfield_contours_{i}.png"), dpi=300, bbox_inches="tight")
 
-    def volume_rendering(self, **kwargs):
-        ts = get_ts(evolution=self.evolution, start=kwargs.get("start", 100), end=kwargs.get("end", 125), step=kwargs.get("step", 1))
-        fields = ts[0].field_list
-        print("\nList of fields: ", fields) 
+    @staticmethod
+    def get_star_position(trajectory_file, times):
+        """
+        Returns the x, y, z positions of the stars at the given times
+        from the trajectory file saved by the simulation code.
 
+        Parameters
+        ----------
+        trajectory_file : str
+            Path to the trajectory file
+        times : list
+            List of times to get the positions of the stars at
+
+        Returns
+        -------
+        star1_x : list
+            List of x positions of star 1
+        star1_y : list
+            List of y positions of star 1
+        star2_x : list
+            List of x positions of star 2
+        star2_y : list  
+            List of y positions of star 2
+        star1_z : list
+            List of z positions of star 1
+        star2_z : list
+            List of z positions of star 2
+        """
+
+        print("Getting star positions from trajectory file...")
+        # print(trajectory_file, times)
+
+        def find_neighbours(value, df, colname):
+            exactmatch = df[df[colname] == value]
+            if not exactmatch.empty:
+                return exactmatch.index
+            else:
+                lowerneighbour_ind = df[df[colname] < value][colname].idxmax()
+                upperneighbour_ind = df[df[colname] > value][colname].idxmin()
+                return lowerneighbour_ind
+
+        headers = ['time', 'unknown','star1_x', 'star1_y', 'star1_z', 
+                'star1_vx', 'star1_vy', 'star1_vz', 'star2_x', 'star2_y', 
+                'star2_z', 'star2_vx', 'star2_vy', 'star2_vz']
+
+        times = [sigfig.round(time, sigfigs=7) for time in times]
+        print(times)
+
+        df = pd.read_csv(trajectory_file, delim_whitespace=True, names=headers)
+
+        index_closest_time = find_neighbours(times[0], df, 'time')
+        df = df.loc[index_closest_time]
+
+        star1_x = (df['star1_x'].tolist()*u.cm).to(u.au).value
+        star1_y = (df['star1_y'].tolist()*u.cm).to(u.au).value
+        star2_x = (df['star2_x'].tolist()*u.cm).to(u.au).value
+        star2_y = (df['star2_y'].tolist()*u.cm).to(u.au).value
+        star1_z = (df['star1_z'].tolist()*u.cm).to(u.au).value
+        star2_z = (df['star2_z'].tolist()*u.cm).to(u.au).value
+
+        return star1_x, star1_y, star2_x, star2_y, star1_z, star2_z
+
+    def volume_rendering(self, **kwargs):
+        from yt.units import cm
         # Creating volume renderings at each time step in ts
-        for i in range(len(ts)):
-            sc = yt.create_scene(ts[i])
-            
+        i=0
+        for file in self.evolution[40:]:
+            ds = get_ds(file)
+            sc = yt.create_scene(ds)
+            # Print the time of the current scene
+            print(f"Time: {ds.current_time.to('s')}")
+            time = np.float64(ds.current_time.to('s').value)
+            print(type(time))
+            # if kwargs['trajectory_file'] is not None:
+                # star1_x, star1_y, star2_x, star2_y, star1_z, star2_z = self.get_star_position(kwargs['trajectory_file'], [time])
             # identifying the source
             source = sc[0]
             source.set_field('density')
             source.set_log(True)
 
+
             # building transfer function
-            bounds = (1e-20, 1e-13)
-            tf = yt.ColorTransferFunction(x_bounds=np.log10(bounds))
-            tf.add_layers(6, w=0.001, colormap='viridis')
+            bounds = (1e-18, 1e-11)
+            tf = yt.ColorTransferFunction(x_bounds=np.log10(bounds), nbins=500)
+            # Automatically add a number of layers
+            tf.add_layers(8, w=0.002, colormap='viridis')
             
             source.tfh.tf = tf
             source.tfh.bounds = bounds
             
             cam = sc.camera
             cam
-            cam.zoom(1)
-            cam.switch_orientation(normal_vector=[-1,-1,-1], north_vector=[-0.703,0.752,-0.749])
+            cam.zoom(2.2)
+            cam.resolution = (4096, 4096)
+            cam.switch_orientation(normal_vector=[-1,0,0], north_vector=[0.2,1,0])
 
-            sc.save(os.path.join(self.img_dir, f"wr140_hyd_n064_{i+1}"), sigma_clip=6.0)
-            print(f"Saving image {os.path.join(self.img_dir, f'wr140_hyd_n064_{i+1}')}")
+            # colors = np.random.random([1, 4])
+            # colors[:, 3] = 1.0
+        
+
+            # points = PointSource(np.array([star1_x*cm, star1_y*cm, star1_z*cm]), colors=colors, radii=5e12)
+            # sc.add_source(points)
+
+            sc.save(os.path.join(self.img_dir, f"wr140_mhd_compton_n256_{i+1}"), sigma_clip=6.0)
+            print(f"Saving image {os.path.join(self.img_dir, f'wr140_mhd_compton_n256_{i+1}.png')}")
             del sc, cam
+            i+=1
 
-        make_movies(self.img_dir, self.img_dir, "wr140_hyd_n064_temp3.mp4")
+        make_movies(self.img_dir, self.img_dir, "wr140_mhd_compton_n256_density.mp4")
 
 # def main():
 #     data_path = '/mnt/massive-stars/data/thomas_simulations/wr140-sims/covertex_start/red_z_res/wr140-mhd-l7n256/'

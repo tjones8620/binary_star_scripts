@@ -1,3 +1,4 @@
+
 __author__ = "Thomas Jones"
 
 import pandas as pd
@@ -70,6 +71,23 @@ class XrayLum:
 
     @staticmethod
     def get_df(path, start_time):
+        """
+        This method reads the data from the .txt file and returns a pandas dataframe 
+        with the time values in days.
+
+        Parameters
+        ----------
+        path : str
+            Path to the .txt file containing the data
+        start_time : float
+            Start time of the simulation before periastron
+            in seconds
+        
+        Returns
+        -------
+        df : pandas dataframe
+            Pandas dataframe with the time values in days
+        """
     
         headers = ['time','g0.1', 'g0.2', 'g0.3', 'g0.5', 'g1', 'g2', 'g5', 'g10']
         df = pd.read_csv(path, delim_whitespace=True, names=headers, index_col=False)
@@ -80,6 +98,19 @@ class XrayLum:
         return df
 
     def plot_xray_lum(self, **kwargs):
+        """
+        This method plots the total X-ray luminosity in different energy bands as a function of time.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Dictionary containing the following optional arguments:
+            xmin : float
+                Minimum value of the x-axis
+            xmax : float
+                Maximum value of the x-axis
+            ymin : float
+        """
 
         fig, ax = plt.subplots()
         ax.set_xlabel('Time (d)')
@@ -110,8 +141,7 @@ class XrayLum:
             lum1 = lum1[indices]
             lum2 = lum2[indices]
 
-        # order_of_mag = np.log10(np.max(lum1))
-        order_of_mag = floor(np.log10(np.max(lum2)))
+        order_of_mag = floor(log10(np.max(lum2)))
 
         ax.plot(time, lum1/10**order_of_mag, linestyle='solid', label='L(2keV - 10keV)')
         ax.plot(time, lum2/10**order_of_mag, linestyle='solid', label='L(0.3keV - 2keV)')

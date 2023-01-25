@@ -58,7 +58,7 @@ def main():
         i += 1
         
     fig.subplots_adjust(hspace=0.01, wspace=0.05)
-    plt.savefig(os.path.join(img_dir, f"orbital_phase_windtracer-combined.png"), dpi=300)
+    plt.savefig(os.path.join(img_dir, f"orbital_phase_windtracer2-combined.png"), dpi=300)
 
 if __name__=="__main__":
     main()

@@ -35,68 +35,72 @@ R_WR = 1.39e11  # Radius of WR star in cm
 
 phi = np.sqrt(MdotO*vO/(MdotWR*vWR)) # Ratio of wind momentum rates
 
-D_array = np.linspace(D, 5*D, 1000) 
+D_array = np.linspace(D, 3*D, 1000) 
 
+
+######### Accelerating winds case #########
+# Calculating the distance from the stars to contact 
+# at each distance for accelerating winds case
 r_WR_array = 1/(1+phi) * D_array 
 r_O_array = D_array - r_WR_array
 
+# Calculating the wind velocity at the contact surface
+# for each star at each distance for accelerating winds case
 vels_O = velocity(r_O_array, vO, R_O)
-chis_O = chi(vels_O, r_O_array, MdotO)
-
 vels_WR = velocity(r_WR_array, vWR, R_WR)
+
+# Calculating chi for each star at each distance for accelerating winds case
+chis_O = chi(vels_O, r_O_array, MdotO)
 chis_WR = chi(vels_WR, r_WR_array, MdotWR)
+
+print("Minimum chi values for accelerating winds case:")
+print(f"chi min O = {min(chis_O)} ")
+print(f"chi min WR = {min(chis_WR)} ")
+
+######### Constant winds case #########
+
+# Calculating the distance from the stars to contact
+# at each distance for constant winds case
+r_WR_array_const = 1/(1+phi) * D_array
+r_O_array_const = D_array - r_WR_array_const
+
+# Calculating the wind velocity at the contact surface
+# for each star at each distance for constant winds case
+vels_O_const = vO * np.ones(len(D_array))
+vels_WR_const = vWR * np.ones(len(D_array))
+
+# Calculating chi for each star at each distance for constant winds case
+chis_O_const = chi(vels_O_const, r_O_array_const, MdotO)
+chis_WR_const = chi(vels_WR_const, r_WR_array_const, MdotWR)
 
 x = np.linspace(0, 10*D, 1000)
 
+print("Minimum chi values for constant winds case:")
+print(f"chi min O = {min(chis_O_const)} ")
+print(f"chi min WR = {min(chis_WR_const)} ")
 
-fig, ax = plt.subplots(3,1, figsize=(5,8))
+
+######### Plotting #########
+fig, ax = plt.subplots(3,1, figsize=(5,8), sharex=True)
 ax[0].plot(D_array/D, r_O_array/D, label="O star")
 ax[0].plot(D_array/D, r_WR_array/D, label="WR star")
-ax[0].set_ylabel("$d_{12}/d_{sep}$")
-ax[0].legend()
+ax[0].set_ylabel("$d_{12}/d_{per}$")
+# ax[0].legend()
 
 ax[1].plot(D_array/D, vels_O/1000, label="O star", color="C0")
 ax[1].plot(D_array/D, vels_WR/1000, label="WR star", color="C1")
-# ax[1].plot(D_array/D, np.ones(len(D_array))*vO/1000, color="C0", linestyle="--")
-# ax[1].plot(D_array/D, np.ones(len(D_array))*vWR/1000, color="C1", linestyle="--")
-ax[1].set_ylabel("$V_{wind}$ $(10^3 km/s)$")
-# ax[1].yaxis.set_major_formatter(plt.FormatStrFormatter(''))
-ax[1].legend(loc="lower right")
+ax[1].set_ylim(1, 3.3)
+ax[1].set_ylabel("$V_{w}$ $(10^3$ $km$ $s^{-1}$)")
 
+ax[2].plot(D_array/D, chis_O, label="O (AW)", color="C0")
+ax[2].plot(D_array/D, chis_WR, label="WR (AW)", color="C1")
+ax[2].plot(D_array/D, chis_O_const, label="O (CW)", linestyle="--", color="C12")
+ax[2].plot(D_array/D, chis_WR_const, label="WR (CW)", linestyle=":", color="C12")
+ax[2].legend(fontsize=8, ncol=2)
 
-ax[2].plot(D_array[np.where(chis_O<15)]/D, chis_O[np.where(chis_O<15)], label="O star")
-ax[2].plot(D_array[np.where(chis_WR<15)]/D, chis_WR[np.where(chis_WR<15)], label="WR star")
-ax[2].set_xlabel("$D$ $(d_{sep})$")
+ax[2].set_xlabel("$D$ $(d_{per})$")
 ax[2].set_ylabel("$\chi(D)$")
-ax[2].legend(loc="lower right")
+
+fig.subplots_adjust(hspace=0.05)
 
 fig.savefig(os.path.join(image_dir, "wind_velocity.png"), bbox_inches='tight', dpi=500)
-
-# fig.savefig(os.path.join(image_dir, "D_vs_d12.png"), bbox_inches='tight', dpi=300)
-# fig2.savefig(os.path.join(image_dir, "D_vs_vwind.png"), bbox_inches='tight', dpi=300)
-# fig3.savefig(os.path.join(image_dir, "D_vs_chi.png"), bbox_inches='tight', dpi=300)
-
-# fig, ax = plt.subplots(figsize=(5,3.5))
-# ax.plot(D_array, r_O_array, label="O star")
-# ax.plot(D_array, r_WR_array, label="WR star")
-# ax.set_xlabel("$D$ (cm)")
-# ax.set_ylabel("$d_{12}$ (cm)")
-# ax.legend(frameon=True)
-
-# fig2, ax2 = plt.subplots(figsize=(5,3.5))
-# ax2.plot(D_array, vels_O, label="O star")
-# ax2.plot(D_array, vels_WR, label="WR star")
-# ax2.set_xlabel("$D$ (cm)")
-# ax2.set_ylabel("$V_{wind}$ (km/s)")
-# ax2.legend(frameon=True)
-
-# fig3, ax3 = plt.subplots(figsize=(5,3.5))
-# ax3.plot(D_array[np.where(chis_O<15)], chis_O[np.where(chis_O<15)], label="O star")
-# ax3.plot(D_array[np.where(chis_WR<15)], chis_WR[np.where(chis_WR<15)], label="WR star")
-# ax3.set_xlabel("$D$ $(cm)$")
-# ax3.set_ylabel("$\chi(D)$")
-# ax3.legend(frameon=True)
-
-# fig.savefig(os.path.join(image_dir, "D_vs_d12.png"), bbox_inches='tight', dpi=300)
-# fig2.savefig(os.path.join(image_dir, "D_vs_vwind.png"), bbox_inches='tight', dpi=300)
-# fig3.savefig(os.path.join(image_dir, "D_vs_chi.png"), bbox_inches='tight', dpi=300)

@@ -215,12 +215,12 @@ class XrayProj:
             ax.set_ylabel(ylabel)
 
         if fig:
-            cbaxes = fig.add_axes([ax.get_position().x0+0.01,ax.get_position().y1+0.01,ax.get_position().width-0.02,0.03])
-            cb = fig.colorbar(image, ax=ax, orientation="horizontal", cax=cbaxes, pad=10.0)
+            cbaxes = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.03, ax.get_position().width-0.02])
+            cb = fig.colorbar(image, ax=ax, orientation="vertical", cax=cbaxes, pad=10.0)
             tick_locator = ticker.MaxNLocator(nbins=5)
             cb.locator = tick_locator
             tick_font_size = 8
-            cb.set_label(label="Flux Density ($10^{" + f"{order_of_mag}" +"}$ erg cm$^{-2}$ s$^{-1}$ arcsec$^{-2}$)", fontsize=12, labelpad=10, )
+            cb.set_label(label="Flux Density ($10^{" + f"{order_of_mag}" +"}$ erg cm$^{-2}$ s$^{-1}$ arcsec$^{-2}$)", fontsize=18, labelpad=10, )
             # Option to put label above colorbar
             cb.ax.xaxis.set_label_position('top')
             cb.ax.xaxis.set_ticks_position('top')
@@ -228,7 +228,9 @@ class XrayProj:
             cb.formatter.set_useMathText(True)
             cb.ax.tick_params(labelsize=tick_font_size)
             cb.update_ticks()
-            fig.savefig(os.path.join(home, "code/project/scripts/images/xray-proj/wr140-compton-mhd-n256/XY/soft/test.png"), pad_inches=0.1, bbox_inches="tight", dpi=300)
+            fig.patch.set_facecolor('white')
+            fig.patch.set_alpha(0.0)
+            fig.savefig(os.path.join(home, "code/project/scripts/images/xray-proj/wr140-compton-mhd-n256/XY/soft/test.png"), pad_inches=0.1, bbox_inches="tight", dpi=900, transparent=True)
 
         return image
 

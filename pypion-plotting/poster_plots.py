@@ -38,7 +38,7 @@ def main():
         plot = Plot_Functions(sim['path'], img_dir, fluidquantity, tolerance, surface, period=7.992, start_time=sim['start_time'])
         plot.plot_orbital_phase(ax=ax, log=True, colormap="viridis", phase_choice=1.001, zoom=1, plot_inset=sim['inset'])
 
-        plt.savefig(os.path.join(img_dir, "density_{}_orbital_phase.png".format(sim['label'])), dpi=900, bbox_inches="tight")
+        plt.savefig(os.path.join(img_dir, "density_{}_orbital_phase.png".format(sim['label'])), dpi=900, bbox_inches="tight", transparent=True)
 
 if __name__ == "__main__":
     main()
