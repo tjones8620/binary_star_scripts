@@ -35,7 +35,7 @@ class Plot_Functions:
     quantity_dict = {'Density':r'$\rho$', 'Temperature':"T", 'Velocity': "v", 'Tr000_WIND': "Wind Tracer"}
     unit_dict = {'Density': "$g \, cm^{-3}$", 'Temperature': "K", 'Velocity': "$cm \, s^{-1}$", "Tr000_WIND": ""}
 
-    def __init__(self, path, image_dir, fluid_quantity="Density", tolerance=[-20,13], plane="XY", start_time=0, period=7.992):
+    def __init__(self, path, basename, image_dir, fluid_quantity="Density", tolerance=[-20,13], plane="XY", start_time=0, period=1):
         ########### Defining path to SILO files #######################
         self.data_path = path
         if os.path.exists(path):
@@ -45,10 +45,11 @@ class Plot_Functions:
             exit()
             
         ########### Base name of SILO files ############################
-        _ = os.listdir(path)
-        _= sorted([f for f in _ if f.endswith('.silo')])
-        self.filename=(_[0]).replace('_level00_0000.00000000.silo','')
-        # self.filename=sorted(os.listdir(self.data_path))[4].replace('_level00_0000.00000000.silo','')
+        # _ = os.listdir(path)
+        # _= sorted([f for f in _ if f.endswith('.silo')])
+        # self.filename=(_[0]).replace('_level00_0000.00000000.silo','')
+        # # self.filename=sorted(os.listdir(self.data_path))[4].replace('_level00_0000.00000000.silo','')
+        self.filename = basename
         print(self.filename)
 
         ########### Define desired fluid quantity ######################
@@ -85,7 +86,7 @@ class Plot_Functions:
     def make_snapshots(data_path, filename):
         ########## Cataloging silo files ###############################
         # os.chdir(data_path)
-        file_list = glob.glob(os.path.join(data_path, '*.silo'), recursive=True)
+        file_list = glob.glob(os.path.join(data_path, f'{filename}*.silo'), recursive=True)
         level_list = []
         files = []
 
@@ -108,10 +109,18 @@ class Plot_Functions:
         else:
             print(f'Simulation Info: {len(level_list)} levels')
             catalog = []
+            len_level_list = []
             for i in range(len(level_list)):
                 files = sorted(glob.glob(os.path.join(data_path, f"{filename}_level{level_list[i]}_0000.*.silo")))
+                len_level_list.append(len(files))
                 catalog.append(files)
-                
+
+        for i in range(len(catalog)):
+            catalog[i] = catalog[i][0:min(len_level_list)]
+
+        # for i in range(len(catalog)):
+        #     print(f"Level {i}: {len(catalog[i])} files")
+
         # Bundle silo files of different levels of same time instant into a snapshot.
         evolution = np.array(catalog).T
         print(f"Shape of evolution array: {evolution.shape}")
@@ -125,7 +134,6 @@ class Plot_Functions:
         for j in range(len(N_grids)):
             if N_grids[j] > 1: self.N_dims += 1
         print(f'Simulation Info: {self.N_dims}D System')
-        #End of making snapshots ***************************************************
 
     @staticmethod
     def create_image_dir(img_dir, *args):
@@ -140,7 +148,7 @@ class Plot_Functions:
 
     #######################################################################
     # 3D-Surface-Plotter
-    def ThreeDSurfacePlotter(self, colormap='viridis', movie=False, log=True, **kwargs):
+    def ThreeDSurfacePlotter(self, colormap='viridis', movie=False, log=True, plot_inset=False, inset_zoom=2, **kwargs):
 
         """
         This function plots the 3D surface of the simulation.
@@ -153,6 +161,11 @@ class Plot_Functions:
             If True, a movie of the simulation will be created. The default is False.
         log : bool, optional
             If True, the plot will be in log scale. The default is True.
+        plot_inset : bool, optional
+            If True, an inset of the simulation will be plotted. The default is False.
+        inset_zoom : int, optional
+            The zoom factor of the inset. The default is 2.
+        
         
         Returns
         -------
@@ -182,6 +195,16 @@ class Plot_Functions:
             ax.set_xlabel(f"{xlabel} ({str(dims_min.unit)})", fontsize=8)
             ax.set_ylabel(f"{ylabel} ({str(dims_min.unit)})", fontsize=8)
 
+            if plot_inset==True:
+                axins = ax.inset_axes([0.6, 0, 0.4, 0.4], transform=ax.transAxes)
+                axins.set_xlim(dims_min[0][x].value/(inset_zoom), dims_max[0][x].value/(inset_zoom))
+                axins.set_ylim(dims_min[0][y].value/(inset_zoom), dims_max[0][y].value/(inset_zoom))
+                axins.set_xticks([])
+                axins.set_yticks([])
+                axins.set_xlabel("")
+                axins.set_ylabel("")
+                ax.indicate_inset_zoom(axins, edgecolor="black")
+
             # Looping over all the levels
             for l in range(N_level): 
 
@@ -202,6 +225,12 @@ class Plot_Functions:
                                       origin="lower",
                                       vmin=self.Tolerance[0], vmax=self.Tolerance[1]
                                       )
+                    if plot_inset==True:
+                        axins.imshow(np.log10(sliced_data), interpolation="nearest", cmap=colormap,
+                                    extent=extents,
+                                    origin="lower",
+                                    vmin=self.Tolerance[0], vmax=self.Tolerance[1]
+                                    )   
 
                 elif (log == False):
                     image = ax.imshow(sliced_data, interpolation="nearest", cmap=colormap,
@@ -209,6 +238,12 @@ class Plot_Functions:
                                       origin="lower",
                                       vmin=10**self.Tolerance[0], vmax=10**self.Tolerance[1]
                                       )
+                    if plot_inset==True:
+                        axins.imshow(sliced_data, interpolation="nearest", cmap=colormap,
+                                    extent=extents,
+                                    origin="lower",
+                                    vmin=self.Tolerance[0], vmax=self.Tolerance[1]
+                                    )  
                 else:
                     print('Error: log must be True or False')
                     exit()
@@ -335,8 +370,8 @@ class Plot_Functions:
 
             if plot_inset==True:
                 axins = ax[num].inset_axes([0.55, 0, 0.45, 0.45], transform=ax[num].transAxes)
-                axins.set_xlim(dims_min[0][x].value/(zoom*16), dims_max[0][x].value/(zoom*16))
-                axins.set_ylim(dims_min[0][y].value/(zoom*16), dims_max[0][y].value/(zoom*16))
+                axins.set_xlim(dims_min[0][x].value/(zoom*32), dims_max[0][x].value/(zoom*32))
+                axins.set_ylim(dims_min[0][y].value/(zoom*32), dims_max[0][y].value/(zoom*32))
                 axins.set_xticks([])
                 axins.set_yticks([])
                 axins.set_xlabel("")
