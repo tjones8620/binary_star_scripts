@@ -12,10 +12,11 @@ def main():
     fluidquantity = "Density"
     surface = "XY"
     tolerance = [-20,-13]
-    img_dir = os.path.join(home, "code/project/scripts/images/SimulationPlots/windtracer/")
+    img_dir = os.path.join(home, "code/project/scripts/testing/pypion-plotting/figures")
 
     mhd1 = {
         "path":"/mnt/massive-stars/data/thomas_simulations/wr140-sims/covertex_start/red_z_res/wr140-mhd-l7n256",
+        "basename": "wr140_mhd_cool_d3l7n256",
         "start_time":-2.671e7,
         "label": "mhd-1",
         "color": None,
@@ -25,6 +26,7 @@ def main():
 
     mhd2 = {
         "path":"/mnt/massive-stars/data/thomas_simulations/wr140-sims/compton_tests/compton_mhd_n256",
+        "basename": "wr140_mhd_compton_d3l7n256",
         "start_time":-1.239e7,
         "label": "mhd-2",
         "inset": True
@@ -35,7 +37,7 @@ def main():
 
     for sim in sim_list:
         fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-        plot = Plot_Functions(sim['path'], img_dir, fluidquantity, tolerance, surface, period=7.992, start_time=sim['start_time'])
+        plot = Plot_Functions(sim['path'], sim['basename'], img_dir, fluidquantity, tolerance, surface, period=7.992, start_time=sim['start_time'])
         plot.plot_orbital_phase(ax=ax, log=True, colormap="viridis", phase_choice=1.001, zoom=1, plot_inset=sim['inset'])
 
         plt.savefig(os.path.join(img_dir, "density_{}_orbital_phase.png".format(sim['label'])), dpi=900, bbox_inches="tight", transparent=True)

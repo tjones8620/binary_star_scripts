@@ -1,3 +1,8 @@
+# This script calculates the velocities and positions of masses in a stable binary orbit at periastron, 
+# with respect to the centre of mass. 
+# Author: Thomas Jones
+
+
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,7 +11,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import PillowWriter
 from astropy import constants as const
 import astropy.units as u
-from scipy.integrate import odeint, solve_ivp
+from scipy.integrate import odeint
 import math
 import matplotlib
 import argparse
@@ -45,37 +50,50 @@ class BinarySystem:
     AU = const.au.cgs
 
     def __init__(self, e, P, m1, m2, name):
+        # Initialising the class with the input parameters
         self.Ecc = e
         self.Period = P
         self.m1 = m1
         self.m2 = m2
         self.name = name
 
+        # Calculating the periastron velocity and position
         periastron_v_x = self.get_periast_v_x(e, P, m1, m2)
         self.vy1_per, self.vy2_per, self.x1_per, self.x2_per = periastron_v_x
 
+        # Initialising the orbit solution
         init_cond={'m1':m1, 'm2':m2, 
                 'x1':self.x1_per.value, 'y1':0, 
                 'x2':self.x2_per.value, 'y2':0, 
                 'vx1':0, 'vy1':self.vy1_per.value, 
                 'vx2':0, 'vy2':self.vy2_per.value}
-
+        
+        # Solving for the orbit
         self.orb_sol = self.integrate_orbit(k=1, **init_cond)
-
-
 
     @staticmethod
     def get_periast_v_x(e, P, m1, m2):
         """
-        Computes the y component of the velocity of each star in a binary system at periastron 
-        and the distance from each star to the centre of mass of the system (cgs units). 
+        This method computes the y component of the velocity of each star in a binary system at periastron.
+        It also computes the distance from each star to the centre of mass of the system (cgs units).
 
-        - e : eccentricity of the binary system
-        - P : period of the system in days
-        - m1, m2 : masses of stars in units of M_sun
-
+        Parameters
+        ----------
+        e : float
+            Eccentricity of the binary system
+        P : float
+            Period of the system in days
+        m1, m2 : float
+            Masses of stars in units of M_sun
+        
+        Returns
+        -------
+        vy1_per, vy2_per, x1_per, x2_per : float
+            y component of the velocity of each star in a binary system at periastron and 
+            the x-distance from each star to the centre of mass of the system (cgs units).
+        
         """
-        G = const.G.cgs
+
         M_sun = const.M_sun.cgs
 
         Period = P * 24 * 60 * 60 * u.s.cgs # Converting period from days to seconds
@@ -102,14 +120,26 @@ class BinarySystem:
     ########################################################################################
     
     def integrate_orbit(self, k=1, **kwargs):
+        # """
+        # Solves for the periastron velocity and position using the get_periast_v_x() method
+        # and uses this as the initial conditions in order to integrates Newtons equations to
+        # calculate the x,y positions and velocities for each star at closely spaced discrete 
+        # points around the stars orbit. 
+
+        # - k : Number of periods to plot over. Default set to 1.
+        # - **kwargs : keyword arguments for the get_periast_v_x() method
+        # """
         """
         Solves for the periastron velocity and position using the get_periast_v_x() method
         and uses this as the initial conditions in order to integrates Newtons equations to
-        calculate the x,y positions and velocities for each star at closely spaced discrete 
-        points around the stars orbit. 
+        calculate the x,y positions and velocities for each star at closely spaced discrete
+        points around the stars orbit.
 
-        - k : Number of periods to plot over. Default set to 1.
-        - **kwargs : keyword arguments for the get_periast_v_x() method
+        Parameters
+        ----------
+        k : int
+            Number of periods to plot over. Default set to 1.
+        **kwargs : keyword arguments for the get_periast_v_x() method
         """
 
         G = const.G.cgs
@@ -134,7 +164,7 @@ class BinarySystem:
                     G.value*m1/r12**3 *(x1-x2),
                     G.value*m1/r12**3 *(y1-y2)]       
 
-        self.t_array = np.linspace(0, k*self.Period*24*60*60, 1000)
+        self.t_array = np.linspace(0, k*self.Period*24*60*60, 100000)
 
         sol = odeint(dSdt , y0=[x1_0, y1_0, x2_0, y2_0, vx1_0, vy1_0, vx2_0, vy2_0], t=self.t_array)
         sol = sol.T
@@ -162,7 +192,7 @@ class BinarySystem:
         # ax.set_facecolor('k')
         ax.set_xlabel("x (AU)", fontsize=8)
         ax.set_ylabel("y (AU)", fontsize=8)
-        ax.legend(loc="upper right")
+        # ax.legend(loc="upper right")
         plt.savefig(os.path.join(os.path.abspath(os.path.dirname(__file__)),f"orbit_{self.name}.png"), dpi=300)
 
         if make_animation==True:
@@ -177,9 +207,6 @@ class BinarySystem:
                 ylim = np.abs(y2).max()
             
             t_array_yr = self.t_array/(365*24*60*60)
-
-            # phase_array = t_array_yr/self.Period
-
 
 
             def animate(i):
@@ -293,14 +320,15 @@ def main():
     cmdargs = ArgumentInputs()
     binary = BinarySystem(m1=cmdargs.mass1, m2=cmdargs.mass2, P=cmdargs.period, e=cmdargs.eccentricity, name=cmdargs.name)
     
-    headers = ['Quantity', 'Star 1', 'Star 2']
+    headers = ['Parameter', 'Star 1', 'Star 2']
 
     masses = ['Mass [Msun]', f"{binary.m1}", f"{binary.m2}"]
     period = ['Period [days]', f"{binary.Period}",]
+    eccentricity = ['Eccentricity', f"{binary.Ecc}",]
     per_velocities = ['Periastron Vy [cm/s]', f"{binary.vy1_per.value:e}", f"{binary.vy2_per.value:e}"]
     per_positions = ['Periastron X [cm]', f"{binary.x1_per.value:e}", f"{binary.x2_per.value:e}"]
 
-    table_items = [masses, period, per_velocities, per_positions]
+    table_items = [masses,period,eccentricity,per_velocities,per_positions]
     
     if cmdargs.plot:
         if not cmdargs.ani:
